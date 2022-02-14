@@ -102,19 +102,26 @@ message StreamingRecognizeRequest {
 // the audio has multiple channels, the results of all channels will be
 // interleaved. Results of each individual channel will be chronological.
 // However, there is no guarantee of the order of results across channels.
+//
+// Clients should process both the `result` and `error` fields in each message.
+// At least one of these fields will be present in the message. If both `result`
+// and `error` are present, the result is still valid.
 message StreamingRecognizeResponse {
-  // A new recognition result.
+  // A new recognition result. This field will be unset if a new result is not
+  // yet available.
   RecognitionResult result = 1;
 
-  // This is an optional output field. If a server encountered a non-fatal error
-  // when processing the recognition request, it will be returned in this
-  // message. The server will continue to process audio and produce further
-  // results. Clients can continue streaming audio even after receiving these
-  // messages. This error message is meant to be informational.
+  // A non-fatal error message. If a server encountered a non-fatal error when
+  // processing the recognition request, it will be returned in this message.
+  // The server will continue to process audio and produce further results.
+  // Clients can continue streaming audio even after receiving these messages.
+  // This error message is meant to be informational.
   //
   // An example of when these errors maybe produced: audio is sampled at a lower
   // rate than expected by model, producing possibly less accurate results.
-  optional RecognitionError error = 2;
+  //
+  // This field will be unset if there is no error to report.
+  RecognitionError error = 2;
 }
 
 // The top-level message sent by the client for the `CompileContext` request. It
