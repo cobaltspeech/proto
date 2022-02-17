@@ -169,7 +169,19 @@ message RecognitionConfig {
   // guaranteed to be supported is the RAW format with little-endian 16-bit
   // signed samples with the sample rate matching that of the model being
   // requested.
-  AudioFormat audio_format = 2;
+  oneof audio_format {
+    // Audio is raw data without any headers
+    AudioFormatRAW audio_format_raw = 2;
+
+    // Audio has a self-describing header. Headers are expected to be sent at
+    // the beginning of the entire audio file/stream, and not in every
+    // `RecognitionAudio` message.
+    //
+    // The default value of this type is AUDIO_FORMAT_HEADERED_UNSPECIFIED. If
+    // this value is used, the server may attempt to detect the format of the
+    // audio. However, it is recommended that the exact format be specified.
+    AudioFormatHeadered audio_format_headered = 3;
+  }
 
   // This is an optional field. If the audio has multiple channels, this field
   // can be configured with the list of channel indices that should be
@@ -186,7 +198,7 @@ message RecognitionConfig {
   // in this list.
   //
   // BAD: `[0, 2]` for a stereo file; BAD: `[0, 0]` for a mono file.
-  repeated uint32 selected_audio_channels = 3;
+  repeated uint32 selected_audio_channels = 4;
 
   // This is an optional field. It can be used to indicate that the audio being
   // streamed to the recognizer is offset from the original stream by the
@@ -200,13 +212,13 @@ message RecognitionConfig {
   // was interrupted and audio needs to be sent to a new session from the point
   // where the session was previously interrupted, the offset could be set to
   // the point where the interruption had happened.
-  uint64 audio_time_offset_ms = 4;
+  uint64 audio_time_offset_ms = 5;
 
   // This is an optional field. If this is set to `true`, each result will
   // include word level details of the transcript. These details are specified
   // in the `WordDetails` message. If set to `false`, no word-level details will
   // be returned. The default is `false`.
-  bool enable_word_details = 5;
+  bool enable_word_details = 6;
 
   // This is an optional field. If this is set to true, each result will include
   // a confusion network. If set to `false`, no confusion network will be
@@ -214,64 +226,24 @@ message RecognitionConfig {
   // returning a confusion network, this field will have no effect. Tokens in
   // the confusion network always correspond to tokens in the `transcript_raw`
   // returned.
-  bool enable_confusion_network = 6;
+  bool enable_confusion_network = 7;
 
   // This is an optional field. If there is any metadata associated with the
   // audio being sent, use this field to provide it to the recognizer. The
   // server may record this metadata when processing the request. The server
   // does not use this field for any other purpose.
-  RecognitionMetadata metadata = 7;
+  RecognitionMetadata metadata = 8;
 
   // This is an optional field for providing any additional context information
   // that may aid speech recognition. This can also be used to add
   // out-of-vocabulary words to the model or boost recognition of specific
   // proper names or commands. Context information must be pre-compiled via the
   // `CompileContext()` method.
-  RecognitionContext context = 8;
-}
-
-// Format of the audio. This allows specifying whether the audio is raw audio,
-// or audio with a self-describing header.
-//
-// If sending raw audio, the `raw` field must be set to provide relevant
-// details. For headered formats, the self-describing header must be present at
-// the beginning of the stream, and not in every `RecognitionAudio` message.
-message AudioFormat {
-  enum Type {
-    // TYPE_UNSPECIFIED is the default value of this type.
-    TYPE_UNSPECIFIED = 0;
-
-    // Raw audio samples. The `raw` field must be set when this format is used.
-    TYPE_RAW = 1;
-
-    // WAV with a RIFF header
-    TYPE_WAV = 2;
-
-    // MP3 format with a valid frame header at the beginning of data
-    TYPE_MP3 = 3;
-
-    // FLAC format with a valid header
-    TYPE_FLAC = 4;
-
-    // Opus format with an OGG header
-    TYPE_OGG_OPUS = 5;
-  };
-
-  // Type of the audio format. If this field is not specified, but the `raw`
-  // field is set, a value of TYPE_RAW will be assumed. Otherwise, the server
-  // will attempt to detect one of the supported types with a self-describing
-  // header. If this detection fails, an error will be returned.
-  //
-  // It is recommended that the type be explicitly specified.
-  Type type = 1;
-
-  // This field must not be set if the audio format has a self-describing
-  // header. This field must be set when the type is TYPE_RAW.
-  AudioFormatRaw raw = 2;
+  RecognitionContext context = 9;
 }
 
 // Details of audio in raw format
-message AudioFormatRaw {
+message AudioFormatRAW {
   // Encoding of the samples. It must be specified explicitly and using the
   // default value of `AUDIO_ENCODING_UNSPECIFIED` will result in an error.
   AudioEncoding encoding = 1;
@@ -325,6 +297,23 @@ enum AudioEncoding {
   // G.711 a-law
   AUDIO_ENCODING_ALAW = 5;
 };
+
+enum AudioFormatHeadered {
+  // AUDIO_FORMAT_HEADERED_UNSPECIFIED is the default value of this type.
+  AUDIO_FORMAT_HEADERED_UNSPECIFIED = 0;
+
+  // WAV with RIFF headers
+  AUDIO_FORMAT_HEADERED_WAV = 1;
+
+  // MP3 format with a valid frame header at the beginning of data
+  AUDIO_FORMAT_HEADERED_MP3 = 2;
+
+  // FLAC format
+  AUDIO_FORMAT_HEADERED_FLAC = 3;
+
+  // Opus format with OGG header
+  AUDIO_FORMAT_HEADERED_OGG_OPUS = 4;
+}
 
 // Metadata associated with the audio to be recognized.
 message RecognitionMetadata {
