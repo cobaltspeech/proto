@@ -23,24 +23,23 @@ service CubicService {
   // Queries the version of the server.
   rpc Version(VersionRequest) returns (VersionResponse) {
     option (google.api.http) = {
-      get : "/api/v5/version"
+      get: "/api/v5/version"
     };
   }
 
   // Retrieves a list of available speech recognition models.
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
     option (google.api.http) = {
-      get : "/api/v5/listmodels"
+      get: "/api/v5/listmodels"
     };
   }
 
   // Performs bidirectional streaming speech recognition. Receive results while
   // sending audio. This method is only available via GRPC and not via
   // HTTP+JSON. However, a web browser may use websockets to use this service.
-  rpc StreamingRecognize(stream StreamingRecognizeRequest)
-      returns (stream StreamingRecognizeResponse) {
+  rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream StreamingRecognizeResponse) {
     option (google.api.http) = {
-      get : "/api/v5/stream"
+      get: "/api/v5/stream"
     };
   }
 
@@ -58,8 +57,8 @@ service CubicService {
   // one model will generally not be usable with a different model.
   rpc CompileContext(CompileContextRequest) returns (CompileContextResponse) {
     option (google.api.http) = {
-      post : "/api/v5/compilecontext"
-      body : "*"
+      post: "/api/v5/compilecontext"
+      body: "*"
     };
   }
 }
@@ -296,7 +295,7 @@ enum AudioEncoding {
 
   // G.711 a-law
   AUDIO_ENCODING_ALAW = 5;
-};
+}
 
 enum AudioFormatHeadered {
   // AUDIO_FORMAT_HEADERED_UNSPECIFIED is the default value of this type.
@@ -364,7 +363,9 @@ message ContextPhrase {
 }
 
 // Audio to be sent to the recognizer
-message RecognitionAudio { bytes data = 1; }
+message RecognitionAudio {
+  bytes data = 1;
+}
 
 // Description of a Cubic Model
 message Model {
@@ -428,7 +429,9 @@ message RecognitionResult {
 }
 
 // Developer-facing error message about a non-fatal recognition issue.
-message RecognitionError { string message = 1; }
+message RecognitionError {
+  string message = 1;
+}
 
 // A recognition hypothesis
 message RecognitionAlternative {
@@ -493,7 +496,9 @@ message WordInfo {
 }
 
 // Confusion network in recognition output
-message RecognitionConfusionNetwork { repeated ConfusionNetworkLink links = 1; }
+message RecognitionConfusionNetwork {
+  repeated ConfusionNetworkLink links = 1;
+}
 
 // A Link inside a confusion network
 message ConfusionNetworkLink {
