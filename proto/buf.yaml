@@ -1,0 +1,11 @@
+version: v1
+deps:
+  - buf.build/googleapis/googleapis
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT
+  ignore:
+    - cobaltspeech/cubic/v1/cubic.proto # can not fix linter issues without breaking changes
