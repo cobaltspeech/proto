@@ -25,14 +25,14 @@ service Cubic {
   // Queries the Version of the Server
   rpc Version(google.protobuf.Empty) returns (VersionResponse) {
     option (google.api.http) = {
-      get : "/api/version"
+      get: "/api/version"
     };
   }
 
   // Retrieves a list of available speech recognition models
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
     option (google.api.http) = {
-      get : "/api/listmodels"
+      get: "/api/listmodels"
     };
   }
 
@@ -42,18 +42,17 @@ service Cubic {
   // the `StreamingRecognize` method should be preferred.
   rpc Recognize(RecognizeRequest) returns (RecognitionResponse) {
     option (google.api.http) = {
-      post : "/api/recognize"
-      body : "*"
+      post: "/api/recognize"
+      body: "*"
     };
   }
 
   // Performs bidirectional streaming speech recognition.  Receive results while
   // sending audio.  This method is only available via GRPC and not via
   // HTTP+JSON. However, a web browser may use websockets to use this service.
-  rpc StreamingRecognize(stream StreamingRecognizeRequest)
-      returns (stream RecognitionResponse) {
+  rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream RecognitionResponse) {
     option (google.api.http) = {
-      get : "/api/stream"
+      get: "/api/stream"
     };
   }
 
@@ -72,8 +71,8 @@ service Cubic {
   // different model.
   rpc CompileContext(CompileContextRequest) returns (CompileContextResponse) {
     option (google.api.http) = {
-      post : "/api/compilecontext"
-      body : "*"
+      post: "/api/compilecontext"
+      body: "*"
     };
   }
 }
@@ -152,7 +151,9 @@ message ListModelsResponse {
 // individual channel will be chronological.  No such promise is made for the
 // ordering of results of different channels, as results are returned for each
 // channel individually as soon as they are ready.
-message RecognitionResponse { repeated RecognitionResult results = 1; }
+message RecognitionResponse {
+  repeated RecognitionResult results = 1;
+}
 
 // The message returned to the client by the `CompileContext` method.
 message CompileContextResponse {
@@ -286,7 +287,6 @@ message RecognitionConfig {
 
 // Metadata associated with the audio to be recognized.
 message RecognitionMetadata {
-
   // Any custom metadata that the client wants to associate with the recording.
   // This could be a simple string (e.g. a tracing ID) or structured data
   // (e.g. JSON)
@@ -339,7 +339,9 @@ message ContextPhrase {
 }
 
 // Audio to be sent to the recognizer
-message RecognitionAudio { bytes data = 1; }
+message RecognitionAudio {
+  bytes data = 1;
+}
 
 // Description of a Cubic Model
 message Model {
@@ -467,7 +469,9 @@ message WordInfo {
 }
 
 // Confusion network in recognition output
-message RecognitionConfusionNetwork { repeated ConfusionNetworkLink links = 1; }
+message RecognitionConfusionNetwork {
+  repeated ConfusionNetworkLink links = 1;
+}
 
 // A Link inside a confusion network
 message ConfusionNetworkLink {
