@@ -106,7 +106,14 @@ message ListModelsResponse {
 
 // The top-level message sent by the client for the `CreateSession` method.
 message CreateSessionRequest {
-  SessionStart session_start = 1;
+  // Specifies the Diatheke model ID to use for the session.
+  string model_id = 1;
+
+  // Specifies a custom wakeword to use for this session. The
+  // wakeword must be enabled in the Diatheke model for this
+  // to have any effect. It will override the default wakeword
+  // specified in the model.
+  string wakeword = 2;
 }
 
 // The top-level message sent by the server for the `CreateSession` method.
@@ -138,8 +145,10 @@ message StreamTTSRequest {
 }
 
 // The top-level message sent by the server for the `StreamTTS` method.
+// Contains synthesized speech audio. The specific encoding
+// is defined in the server config file.
 message StreamTTSResponse {
-  TTSAudio tts_audio = 1;
+  bytes audio = 1;
 }
 
 // Information about a single Diatheke model.
@@ -192,18 +201,6 @@ message TokenData {
   // Additional data supplied by the client app, which will
   // be logged with other session info by the server.
   string metadata = 3;
-}
-
-// Used to create a new session.
-message SessionStart {
-  // Specifies the Diatheke model ID to use for the session.
-  string model_id = 1;
-
-  // Specifies a custom wakeword to use for this session. The
-  // wakeword must be enabled in the Diatheke model for this
-  // to have any effect. It will override the default wakeword
-  // specified in the model.
-  string wakeword = 2;
 }
 
 // User supplied text to send to Diatheke for processing.
@@ -357,12 +354,6 @@ message ASRResult {
   // created, and should not be confused with a network
   // connection timeout.
   bool timed_out = 3;
-}
-
-// Contains synthesized speech audio. The specific encoding
-// is defined in the server config file.
-message TTSAudio {
-  bytes audio = 1;
 }
 
 // Data to send to the Transcribe stream. The first message on
