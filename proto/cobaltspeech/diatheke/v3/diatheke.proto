@@ -106,7 +106,7 @@ message ListModelsResponse {
 
 // The top-level message sent by the client for the `CreateSession` method.
 message CreateSessionRequest {
-  SessionInput session_input = 1;
+  SessionStart session_start = 1;
 }
 
 // The top-level message sent by the server for the `CreateSession` method.
