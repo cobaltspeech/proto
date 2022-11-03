@@ -16,6 +16,9 @@ syntax = "proto3";
 
 package cobaltspeech.diatheke.v3;
 
+import "cobaltspeech/chosun/v2/chosun.proto";
+import "cobaltspeech/cubic/v5/cubic.proto";
+
 option go_package = ".;diathekepb";
 option java_package = "com.cobaltspeech.diatheke";
 
@@ -283,6 +286,9 @@ message CommandAction {
   // Diatheke model.
   string id = 1;
   map<string, string> input_parameters = 2;
+
+  // NLU result
+  cobaltspeech.chosun.v2.ParseResponse nlu_result = 3;
 }
 
 // This action indicates that the client application should
@@ -354,6 +360,9 @@ message ASRResult {
   // created, and should not be confused with a network
   // connection timeout.
   bool timed_out = 3;
+
+  // Cubic recognition result.
+  cobaltspeech.cubic.v5.RecognitionResult cubic_result = 4;
 }
 
 // Data to send to the Transcribe stream. The first message on
@@ -389,4 +398,7 @@ message TranscribeResponse {
   // transcription is sent, any additional results sent on the
   // Transcribe stream belong to the next utterance.
   bool is_partial = 3;
+
+  // Cubic recognition result.
+  cobaltspeech.cubic.v5.RecognitionResult cubic_result = 4;
 }
