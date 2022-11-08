@@ -24,16 +24,12 @@ import "google/protobuf/empty.proto";
 service Cubic {
   // Queries the Version of the Server
   rpc Version(google.protobuf.Empty) returns (VersionResponse) {
-    option (google.api.http) = {
-      get: "/api/version"
-    };
+    option (google.api.http) = {get: "/api/version"};
   }
 
   // Retrieves a list of available speech recognition models
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {
-      get: "/api/listmodels"
-    };
+    option (google.api.http) = {get: "/api/listmodels"};
   }
 
   // Performs synchronous speech recognition: receive results after all audio
@@ -51,9 +47,7 @@ service Cubic {
   // sending audio.  This method is only available via GRPC and not via
   // HTTP+JSON. However, a web browser may use websockets to use this service.
   rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream RecognitionResponse) {
-    option (google.api.http) = {
-      get: "/api/stream"
-    };
+    option (google.api.http) = {get: "/api/stream"};
   }
 
   // Compiles recognition context information, such as a specialized list of
