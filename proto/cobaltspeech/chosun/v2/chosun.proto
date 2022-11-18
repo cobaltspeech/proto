@@ -14,26 +14,31 @@
 
 syntax = "proto3";
 
-package cobaltspeech.chosun;
-option go_package = ".;chosunpb";
+package cobaltspeech.chosun.v2;
 
 // Service that implements the Cobalt Natural Language Understanding API.
-service Chosun {
+service ChosunService {
     // Returns server version information.
-    rpc Version(Empty) returns (VersionResponse) {}
+    rpc Version(VersionRequest) returns (VersionResponse) {}
 
     // ListModels returns information about the Chosun models
     // the server can access.
-    rpc ListModels(Empty) returns (ListModelsResponse) {}
+    rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
     // Process text and return the recognized intents and entity values.
-    rpc Parse(NLUInput) returns (NLUOutput) {}
+    rpc Parse(ParseRequest) returns (ParseResponse) {}
 }
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
 
 // Lists the Chosun version.
 message VersionResponse {
     string chosun = 1;
 }
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {}
 
 // A list of models available on the Chosun server.
 message ListModelsResponse {
@@ -64,7 +69,7 @@ message ModelInfo {
 }
 
 // Data input for the Parse method.
-message NLUInput {
+message ParseRequest {
     // The ID for the model Chosun should use during processing.
     string model_id = 1;
 
@@ -84,14 +89,18 @@ message NLUInput {
 
         // A confusion network query.
         CNet cnet = 5;
+
+        // An n-best query broken into tokens with per-word confidences.
+        // Like the n-best above, the hypotheses should be sorted.
+        NBestTokens nbest_tokens = 6;
     }
 
     // Contextual features to use in the query.
-    map<string, float> context_features = 6;
+    map<string, float> context_features = 7;
 
     // List of whitelisted intents. If the list is empty, all intents will be
     // considered.
-    repeated string intent_whitelist = 7;
+    repeated string intent_whitelist = 8;
 }
 
 message NBest {
@@ -105,6 +114,20 @@ message Hypothesis {
 
     // The confidence measure for the hypothesis from the model that generated
     // the hypothesis.
+    float confidence = 2;
+}
+
+// An n-best list where the hypotheses are broken into tokens with token-level
+// confidences.
+message NBestTokens {
+    repeated TokenHypothesis hypotheses = 1;
+}
+
+message TokenHypothesis {
+    // Tokens in the hypothesis with text and confidence scores.
+    repeated CNetArc tokens = 1;
+
+    // The utterance-level confidence.
     float confidence = 2;
 }
 
@@ -124,7 +147,7 @@ message CNetArc {
 }
 
 // Data returned from the Parse method.
-message NLUOutput {
+message ParseResponse {
     // The list of recognized intents, sorted by confidence.
     repeated Intent intents = 1;
 }
@@ -170,5 +193,3 @@ message Entity {
     // entity value.
     uint32 end = 4;
 }
-
-message Empty {}
