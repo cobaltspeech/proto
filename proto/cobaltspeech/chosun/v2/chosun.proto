@@ -1,0 +1,174 @@
+// Copyright (2021) Cobalt Speech and Language Inc.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.chosun;
+option go_package = ".;chosunpb";
+
+// Service that implements the Cobalt Natural Language Understanding API.
+service Chosun {
+    // Returns server version information.
+    rpc Version(Empty) returns (VersionResponse) {}
+
+    // ListModels returns information about the Chosun models
+    // the server can access.
+    rpc ListModels(Empty) returns (ListModelsResponse) {}
+
+    // Process text and return the recognized intents and entity values.
+    rpc Parse(NLUInput) returns (NLUOutput) {}
+}
+
+// Lists the Chosun version.
+message VersionResponse {
+    string chosun = 1;
+}
+
+// A list of models available on the Chosun server.
+message ListModelsResponse {
+    repeated DomainInfo domain_sets = 1;
+    repeated ModelInfo models = 2;
+}
+
+// Information about a domain set.
+message DomainInfo {
+    // Chosun domain ID.
+    string id = 1;
+
+    // Pretty domain name, which may be used for display purposes.
+    string name = 2;
+
+    // Mapping from domain labels to the ID of the Chosun model representing
+    // the domain.
+    map<string, string> domains = 3;
+}
+
+// Information about a single Chosun model.
+message ModelInfo {
+    // Chosun model ID, which is used to parse NLU input.
+    string id = 1;
+
+    // Pretty model name, which may be used for display purposes.
+    string name = 2;
+}
+
+// Data input for the Parse method.
+message NLUInput {
+    // The ID for the model Chosun should use during processing.
+    string model_id = 1;
+
+    // The domain to use in a domain set. If this is set, domain classification
+    // is skipped and the model corresponding to the domain is queried. This
+    // should not be set for models other than domain sets.
+    string domain = 2;
+
+    // The query to process.
+    oneof query {
+        // A 1-best query.
+        string text = 3;
+
+        // An n-best query. The hypotheses should be sorted in order of
+        // decreasing confidence.
+        NBest nbest = 4;
+
+        // A confusion network query.
+        CNet cnet = 5;
+    }
+
+    // Contextual features to use in the query.
+    map<string, float> context_features = 6;
+
+    // List of whitelisted intents. If the list is empty, all intents will be
+    // considered.
+    repeated string intent_whitelist = 7;
+}
+
+message NBest {
+    repeated Hypothesis hypotheses = 1;
+}
+
+// Hypothesis holds the text of a possible transcript in a query.
+message Hypothesis {
+    // Text of the hypothesis.
+    string text = 1;
+
+    // The confidence measure for the hypothesis from the model that generated
+    // the hypothesis.
+    float confidence = 2;
+}
+
+message CNet {
+    repeated CNetLink links = 1;
+}
+
+// A segment of time for a confusion network.
+message CNetLink {
+    repeated CNetArc arcs = 1;
+}
+
+// A candidate word within a confusion network link.
+message CNetArc {
+    string word = 1;
+    float confidence = 2;
+}
+
+// Data returned from the Parse method.
+message NLUOutput {
+    // The list of recognized intents, sorted by confidence.
+    repeated Intent intents = 1;
+}
+
+// An intent recognized from the input text.
+message Intent {
+    // The domain recognized for the query. If a Chosun model was queried
+    // directly, this will be an empty string.
+    string domain = 1;
+
+    // The name of the intent.
+    string id = 2;
+
+    // Confidence estimate between 0 and 1. A higher number
+    // represents a higher likelihood of the output being
+    // correct.
+    double confidence = 3;
+
+    // The list of entities recognized with this intent.
+    repeated Entity entities = 4;
+
+    // The text of the query. This is helpful when an n-best list is provided.
+    string text = 5;
+}
+
+// An entity recognized from the input text.
+message Entity {
+    // The name of the entity.
+    string id = 1;
+
+    // The value of the entity based on the input text. Depending on the
+    // Chosun model, this might not be the same as what was given in
+    // the input string, especially if a synonym replacement occurred.
+    // To find the original value as it was given in the input, use the
+    // start and end index of the entity.
+    string value = 2;
+
+    // The index in the original text string where the entity value begins.
+    uint32 start = 3;
+
+    // The index in the original text string where the entity value ends.
+    // Note that this index will be one past the last character of the
+    // entity value.
+    uint32 end = 4;
+}
+
+message Empty {}
