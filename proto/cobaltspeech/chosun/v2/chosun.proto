@@ -192,4 +192,7 @@ message Entity {
   // Note that this index will be one past the last character of the
   // entity value.
   uint32 end = 4;
+
+  // confidence is the confidence value between 0 and 1 for the given entity.
+  float confidence = 5;
 }
