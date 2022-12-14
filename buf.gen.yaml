@@ -17,3 +17,8 @@ plugins:
     opt:
       - paths=source_relative
       - standalone=true
+  - name: doc
+    out: gen/docs
+#    opt:
+#      - doc_opt=html,index.html
+#      - proto/cobaltspeech/*/*.proto

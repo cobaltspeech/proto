@@ -21,6 +21,7 @@
               grpc
               grpc-gateway
               protobuf
+              protoc-gen-doc
               protoc-gen-go
               protoc-gen-go-grpc
               go
