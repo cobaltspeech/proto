@@ -19,6 +19,5 @@ plugins:
       - standalone=true
   - name: doc
     out: gen/docs
-#    opt:
-#      - doc_opt=html,index.html
-#      - proto/cobaltspeech/*/*.proto
+    opt:
+      - ./doc-templates/grpc-md.tmpl,api.md,source_relative

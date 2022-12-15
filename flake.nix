@@ -20,6 +20,7 @@
               buf
               grpc
               grpc-gateway
+              pandoc texlive.combined.scheme-small
               protobuf
               protoc-gen-doc
               protoc-gen-go
