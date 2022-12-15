@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Cobalt ASR is a state-of-the-art speech recognition system, which uses deep-learning models for fast, accurate speech recognition.
+ */
 syntax = "proto3";
 
 package cobaltspeech.cubic.v5;

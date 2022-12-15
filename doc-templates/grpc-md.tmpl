@@ -1,0 +1,89 @@
+# API Reference
+{{range .Files}}
+{{.Description}}
+
+The API is defined as a proto spec, so native bindings can be generated in any language
+with gRPC support.  We recommend using [buf](https://docs.buf.build/tour/generate-code) 
+to generate the bindings. 
+
+This section of the documentation is auto-generated from the protobuf spec. 
+The service contains the methods that can be called, and the “messages” are the data structures
+(objects, classes or structs in the generated code, depending on the language) passed to and from the methods.
+
+# Table of Contents
+{{range .Services}}
+- [{{.Name}}](#{{.Name}})
+  {{range .Methods -}}
+  - [{{.Name}}](#{{.Name}})
+  {{end}}
+{{end}}
+{{if .HasMessages}}
+- Messages (Data structures)
+  {{range .Messages}}  - [{{.LongName}}](#{{.LongName}})
+  {{end}}
+{{end}}
+{{if .HasEnums}}
+- Enums
+  {{range .Enums}}  - [{{.LongName}}](#{{.LongName}})
+  {{end}}
+{{end}}
+{{end}}
+- [Scalar Value Types](#scalar-value-types)
+{{range .Files}}
+
+{{range .Services -}}
+# {{.Name}}
+{{.Description}}
+
+{{range .Methods -}}
+## {{.Name}}
+
+> {{.Name}}([{{.RequestLongType}}](#{{.RequestLongType}}))
+    [{{.ResponseLongType}}](#{{.ResponseLongType}})
+
+{{ .Description}}
+{{end}} <!-- end methods -->
+{{end}} <!-- end services -->
+
+# Messages
+* If two or more fields in a message are labeled [**oneof**](https://developers.google.com/protocol-buffers/docs/proto3#oneof), 
+then each method call using that message must have exactly one of the fields populated
+* If a field is labeled `repeated`, then the generated code will accept an array (or struct, or list depending on the language).
+
+{{range .Messages}}
+
+## {{.LongName}}
+{{.Description}}
+
+{{if .HasFields}}
+### Fields
+{{range .Fields -}}
+	- {{if .IsOneof}}[**oneof**](https://developers.google.com/protocol-buffers/docs/proto3#oneof) {{.OneofDecl}}.{{end}}**{{.Name}}** ([{{if .IsMap}}map {{else}}{{end}}{{.LongType}}](#{{.LongType | lower | replace "." ""}}) {{.Label}})
+    {{if .Description}}{{.Description | replace "\n" "\n    "}}
+    {{if .DefaultValue}} Default: {{.DefaultValue}}{{end}}{{end}}
+{{end}} <!-- end Fields -->
+{{end}} <!-- end HasFields -->
+{{end}} <!-- end messages -->
+
+# Enums
+{{range .Enums}}
+
+## {{.LongName}} {#{{.LongName | lower | replace "." ""}}}
+{{.Description}}
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+{{range .Values -}}
+	| {{.Name}} | {{.Number}} | {{if .Description}}{{nobr .Description}}{{end}} |
+{{end}}
+
+{{end}} <!-- end Enums -->
+{{end}} <!-- end Files -->
+
+# Scalar Value Types
+
+| .proto Type | Notes | C++ Type | Java Type | Python Type |
+| ----------- | ----- | -------- | --------- | ----------- |
+{{range .Scalars -}}
+  | <div><h4 id="{{.ProtoType | lower | replace "." ""}}" /></div><a name="{{.ProtoType}}" /> {{.ProtoType}} | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} |
+{{end}}
