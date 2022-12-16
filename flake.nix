@@ -15,6 +15,7 @@
 
         shellForPkgs = pkgs:
           pkgs.mkShell {
+            name = "proto";
             buildInputs = with pkgs; [
               buf
               grpc

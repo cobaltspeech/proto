@@ -23,7 +23,7 @@ if (env.CHANGE_ID) {
 		stage('fmt-check') {
 			commit.setBuildStatus("fmt-check", "PENDING", "")
 			try {
-				sh "./bin/fmt-check.sh"
+				sh "nix develop -c ./bin/fmt-check.sh"
 				commit.setBuildStatus("fmt-check", "SUCCESS", "All files correctly formatted")
 			} catch(err) {
 				commit.setBuildStatus("fmt-check", "ERROR", "Some files not correctly formatted")
@@ -47,7 +47,7 @@ if (env.CHANGE_ID) {
 		stage('lint-check') {
 			commit.setBuildStatus("lint-check", "PENDING", "")
 			try {
-				sh "./bin/lint-check.sh"
+				sh "nix develop -c ./bin/lint-check.sh"
 				commit.setBuildStatus("lint-check", "SUCCESS", "All files OK")
 			} catch(err) {
 				commit.setBuildStatus("lint-check", "ERROR", "Some files have linter errors")
@@ -70,7 +70,7 @@ if (env.BRANCH_NAME == "master") {
 		stage ('gen-and-publish') {
 			commit.setBuildStatus("publish", "PENDING", "")
 			try {
-				sh "./bin/generate-and-publish.sh"
+				sh "nix develop -c ./bin/generate-and-publish.sh"
 				commit.setBuildStatus("publish", "SUCCESS","Changes published")
 			} catch(err) {
 				commit.setBuildStatus("publish", "ERROR", "Changes not published")
