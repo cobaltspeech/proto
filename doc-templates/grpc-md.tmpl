@@ -2,7 +2,7 @@
 {{range .Files}}
 {{.Description}}
 
-The API is defined as a proto spec, so native bindings can be generated in any language
+The API is defined as a protobuf spec, so native bindings can be generated in any language
 with gRPC support.  We recommend using [buf](https://docs.buf.build/tour/generate-code) 
 to generate the bindings. 
 
@@ -68,7 +68,7 @@ then each method call using that message must have exactly one of the fields pop
 # Enums
 {{range .Enums}}
 
-## {{.LongName}} {#{{.LongName | lower | replace "." ""}}}
+## {{.LongName}}
 {{.Description}}
 
 | Name | Number | Description |
@@ -82,8 +82,8 @@ then each method call using that message must have exactly one of the fields pop
 
 # Scalar Value Types
 
-| .proto Type | Notes | C++ Type | Java Type | Python Type |
-| ----------- | ----- | -------- | --------- | ----------- |
+| .proto Type | C++ Type | C# Type | Go Type | Java Type | PHP Type | Python Type | Ruby Type
+| ----------- | -------- | ------- | ------- | --------- | -------- | ----------- | ---------
 {{range .Scalars -}}
-  | <div><h4 id="{{.ProtoType | lower | replace "." ""}}" /></div><a name="{{.ProtoType}}" /> {{.ProtoType}} | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} |
+  | <div><h4 id="{{.ProtoType | lower | replace "." ""}}" /></div><a name="{{.ProtoType}}" /> {{.ProtoType}} | {{.CppType}} | {{.CSharp}} | {{.GoType}} | {{.JavaType}} | {{.PhpType}} | {{.PythonType}} | {{.RubyType}}
 {{end}}
