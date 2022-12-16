@@ -23,6 +23,8 @@
               protobuf
               protoc-gen-go
               protoc-gen-go-grpc
+              go
+              gitFull
             ];
 
             shellHook = ''
