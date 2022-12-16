@@ -24,6 +24,11 @@
               protoc-gen-go-grpc
             ];
 
+            shellHook = ''
+              export GOPROXY="http://goproxy.in.cobaltspeech.com"
+              export GONOSUMDB="github.com/cobaltspeech/*"
+            '';
+
           };
       in { devShells.default = shellForPkgs pkgs; });
 }
