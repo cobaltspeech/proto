@@ -70,6 +70,8 @@ if (env.BRANCH_NAME == "master") {
 		stage ('gen-and-publish') {
 			commit.setBuildStatus("publish", "PENDING", "")
 			try {
+				sh "git config --global user.email \"noreply@cobaltspeech.com\""
+				sh "git config --global user.name \"Cobalt\""
 				sh "nix develop -c ./bin/generate-and-publish.sh"
 				commit.setBuildStatus("publish", "SUCCESS","Changes published")
 			} catch(err) {
