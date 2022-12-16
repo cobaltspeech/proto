@@ -58,25 +58,29 @@ if (env.CHANGE_ID) {
 }
 
 if (env.BRANCH_NAME == "master") {
-	// Allow the pipeline access to the jenkins ssh key for github.
-	sshagent(credentials: ['jenkins-ssh-key']) {
+	node('nix') {
+		// Allow the pipeline access to the jenkins ssh key for github.
+		sshagent(credentials: ['jenkins-ssh-key']) {
 
-		// Trust the github ssh public keys (should match https://api.github.com/meta)
-		sh '''
-			[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0700 ~/.ssh
-			curl https://api.github.com/meta | jq  -r '.ssh_keys | "github.com " + .[]' > ~/.ssh/known_hosts
-		'''
+			// Trust the github ssh public keys (should match https://api.github.com/meta)
+			sh '''
+	    		[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0700 ~/.ssh
+	    		curl https://api.github.com/meta | jq  -r '.ssh_keys | "github.com " + .[]' > ~/.ssh/known_hosts
+    		'''
 
-		stage ('gen-and-publish') {
-			commit.setBuildStatus("publish", "PENDING", "")
-			try {
-				sh "git config --global user.email \"noreply@cobaltspeech.com\""
-				sh "git config --global user.name \"Cobalt\""
-				sh "nix develop -c ./bin/generate-and-publish.sh"
-				commit.setBuildStatus("publish", "SUCCESS","Changes published")
-			} catch(err) {
-				commit.setBuildStatus("publish", "ERROR", "Changes not published")
-				throw err
+			checkout scm
+
+			stage ('gen-and-publish') {
+				commit.setBuildStatus("publish", "PENDING", "")
+				try {
+					sh "git config --global user.email \"noreply@cobaltspeech.com\""
+					sh "git config --global user.name \"Cobalt\""
+					sh "nix develop -c ./bin/generate-and-publish.sh"
+					commit.setBuildStatus("publish", "SUCCESS","Changes published")
+				} catch(err) {
+					commit.setBuildStatus("publish", "ERROR", "Changes not published")
+					throw err
+				}
 			}
 		}
 	}
