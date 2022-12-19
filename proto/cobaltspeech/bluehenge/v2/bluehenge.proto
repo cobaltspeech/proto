@@ -1,0 +1,177 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.bluehenge.v2;
+
+import "google/api/annotations.proto";
+
+service BluehengeService {
+  // Returns version information of the Bluehenge server.
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {get: "/api/v2/version"};
+  }
+
+  // It sends an empty request and gets as response a list of all the procedures stored in the knowledge graph
+  rpc ListProcedures(ListProceduresRequest) returns (ListProceduresResponse) {
+    option (google.api.http) = {get: "/api/v2/listprocedures"};
+  }
+
+  // Gets a single procedure identified by id
+  rpc GetProcedures(GetProceduresRequest) returns (GetProceduresResponse) {
+    option (google.api.http) = {get: "/api/v2/getprocedures"};
+  }
+
+  // Saves a note in a specific step during a procedure
+  rpc SaveNote(SaveNoteRequest) returns (SaveNoteResponse) {
+    option (google.api.http) = {get: "/api/v2/savenote"};
+  }
+
+  // Gets the data related with an image.  The actual image will be served over HTTP.
+  rpc GetEntityImage(GetEntityImageRequest) returns (GetEntityImageResponse) {
+    option (google.api.http) = {get: "/api/v2/getentityimage"};
+  }
+}
+
+// Empty request for Bluehenge Version
+message VersionRequest {}
+
+// Lists the version of the Bluehenge server.
+message VersionResponse {
+  // Bluehenge engine
+  string bluehenge = 1;
+}
+
+// Empty request to get the procedures stored in the knowledge graph
+message ListProceduresRequest {}
+
+// List of procedures from Gremlin
+message ListProceduresResponse {
+  // Repeated (list) procedures from Gremlin/knowledge graph
+  repeated GetProceduresResponse procedures = 1;
+}
+
+// Input to get a single procedure by its id
+message GetProceduresRequest {
+  // Id to identify a single procedure
+  string id = 1;
+}
+
+// Procedure from Gremlin
+message GetProceduresResponse {
+  // Id of the procedure
+  string id = 1;
+  // Name of the procedure
+  string name = 2;
+  // Number of the procedure
+  string procedure_number = 3;
+  // AdditionalNames of the task
+  string additional_names = 4; // This will be repeated
+  // InputConditions text of the procedure
+  string input_conditions = 5; // This will be inputConditions
+  // Prerequisites of the procedure
+  string prerequisites_warning_text = 6;
+  // List of Task data of the procedure
+  repeated TaskData tasks = 7;
+}
+
+// Data of InputConditions within a procedure
+message InputConditionData {
+  // Id of the task
+  string id = 1;
+  // Applicability of the task
+  string applicability = 2;
+  // RequiredConditions of the task
+  string required_conditions = 3;
+  // List of personnel of the task
+  string personnel = 4; // This will be repeated
+  // List of supportEquipment of the task
+  string support_equipment = 5; // This will be repeated
+  // List of additionalData of the task
+  string additional_data = 6; // This will be repeated
+}
+
+// Data of tasks within a procedure
+message TaskData {
+  // Id of the task
+  string id = 1;
+  // TaskName of the task
+  string task_name = 2;
+  // TaskNumber of the task
+  string task_number = 3;
+  // AdditionalNames of the task
+  string additional_names = 4; // This will be repeated
+  // WarningText of the task
+  string warning_text = 5;
+  // List of steps of the task
+  repeated StepData steps = 6;
+}
+
+// Data of steps within a task
+message StepData {
+  // Id of the step
+  string id = 1;
+  // Instructions of the step
+  string instruction_text = 2;
+  // Summary of the step
+  string summary_text = 3;
+  // DisplayLabelText of the step
+  string person = 4;
+  // TaskNumber of the step
+  string task_number = 5;
+  // StepNumber of the step
+  string step_number = 6;
+  // Image of the step
+  string image = 7;
+  // List of notes of the step
+  repeated Notes notes = 8;
+}
+
+// Notes of a step
+message Notes {
+  // Text of the note
+  string text = 1;
+}
+
+// Input to save a note
+message SaveNoteRequest {
+  // Text of a note to save
+  string text = 1;
+  // Step id of a note to save
+  string step_id = 2;
+}
+
+// Empty response once the note is saved
+message SaveNoteResponse {}
+
+// Input to get the entity of an image
+message GetEntityImageRequest {
+  // Id of an entity image
+  string id = 1;
+}
+
+// Output of get entity image
+message GetEntityImageResponse {
+  // List of images data
+  repeated ImageData image_data_list = 1;
+}
+
+// Data from an image
+message ImageData {
+  // Id of an image
+  string id = 1;
+  //File path of an image
+  string file_path = 2;
+  // Caption of an image
+  string caption = 3;
+}
