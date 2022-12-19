@@ -1,0 +1,388 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.bluehenge.v2;
+
+import "cobaltspeech/diatheke/v3/diatheke.proto";
+import "google/api/annotations.proto";
+
+// Bluehenge is designed to help with maintainance and repair tasks.
+// When paired with other cobalt offerings, it can provide a hands-free virtual assistant for technicians.
+//
+// Data is extracted from repair manuals and stored in a knowledge graph database.
+// During the extraction process, links back to the original documents are created.
+// Procedure data will include those links for convenience.
+//
+// Each manual may have a different structure, but generally uses groups of simple steps.
+// Bluehenge assumes the following structure, which should be generic enough for most applications:
+//     Procedures > Tasks > Steps.
+// For example:
+//     A Procedure would be a full service item, such as replacing an alternator.
+//     A Task would be to remove the old alternator or install the new one.
+//     A Step would be to remove the 4 bolts that mount the alternator.
+//
+// This API often referes to names and numbers for each procedure, task, and step.
+// Procedure numbers are often in the form of Chapter.Section.  i.e. 4.2 or 4-2.
+// Task numbers extend that the procedure number.  4.2.3 or 4-2-3.
+// Steps are a simple count after the procedure number.  4.2.3 step #5.
+// Because of the variety of user manuals, these names/numbers will all be treated as strings.
+// Each application will be responsible for any string manipulation they need.
+
+service BluehengeService {
+  // Returns version information of the Bluehenge server.
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {get: "/api/v2/version"};
+  }
+
+  // ListModels returns information about the Bluehenge models
+  // the server can access.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {get: "/api/v2/listmodels"};
+  }
+
+  // Create a new Bluehenge session. Also returns a list of
+  // actions to take next.
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/createsession"
+      body: "*"
+    };
+  }
+
+  // Delete the session. Behavior is undefined if the given
+  // TokenData is used again after this function is called.
+  rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/deletesession"
+      body: "*"
+    };
+  }
+
+  // Process input for a session and get an updated session with
+  // a list of actions to take next. This is the only method
+  // that modifies the Bluehenge session state.
+  rpc UpdateSession(UpdateSessionRequest) returns (UpdateSessionResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/updatesession"
+      body: "*"
+    };
+  }
+
+  // Create an ASR stream. A result is returned when the
+  // stream is closed by the client (which forces the ASR to
+  // endpoint), or when a transcript becomes available on its
+  // own, in which case the stream is closed by the server.
+  // The ASR result may be used in the UpdateSession method.
+  // <br/><br/>
+  // If the session has a wakeword enabled, and the client
+  // application is using Diatheke and Cubic to handle the
+  // wakeword processing, this method will not return a
+  // result until the wakeword condition has been satisfied.
+  // Utterances without the required wakeword will be
+  // ignored and no transcription will be returned.
+  rpc StreamASR(stream StreamASRRequest) returns (StreamASRResponse) {}
+
+  // Create a TTS stream to receive audio for the given reply.
+  // The stream will close when TTS is finished. The client
+  // may also close the stream early to cancel the speech
+  // synthesis.
+  rpc StreamTTS(StreamTTSRequest) returns (stream StreamTTSResponse) {}
+
+  // Create an ASR stream for transcription. Unlike StreamASR,
+  // Transcribe does not listen for a wakeword. This method
+  // returns a bi-directional stream, and its intended use is
+  // for situations where a user may say anything at all, whether
+  // it is short or long, and the application wants to save the
+  // transcript (e.g., take a note, send a message).
+  // <br/><br/>
+  // The first message sent to the server must be the TranscribeAction,
+  // with remaining messages sending audio data.
+  // Messages received from the server will include the current
+  // best partial transcription until the full transcription is
+  // ready. The stream ends when either the client application
+  // closes it, a predefined duration of silence (non-speech)
+  // occurs, or the end-transcription intent is recognized.
+  rpc Transcribe(stream TranscribeRequest) returns (stream TranscribeResponse) {}
+
+  // Returns a list of all the procedures.
+  // This list is contains a simplified representation of the procedures,
+  // which can be helpful for displaying a directory or table of contents.
+  // The full details of an individual procedure can be retrieved via GetProcedure.
+  rpc ListProcedures(ListProceduresRequest) returns (ListProceduresResponse) {
+    option (google.api.http) = {get: "/api/v2/listprocedures"};
+  }
+
+  // Gets a single procedure identified by id.
+  // The response returns everything you should need to be able to display the Procedure and it's Steps and Tasks to the user.
+  rpc GetProcedure(GetProcedureRequest) returns (GetProcedureResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/getprocedure"
+      body: "*"
+    };
+  }
+
+  // Saves a note in a specific step during a procedure.
+  rpc SaveNote(SaveNoteRequest) returns (SaveNoteResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/savenote",
+      body: "*"
+    };
+  }
+
+  // Gets the data related with an image.
+  // The actual image will be served over HTTP.
+  rpc GetEntityImageData(GetEntityImageDataRequest) returns (GetEntityImageDataResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/getentityimage"
+      body: "*"
+    };
+  }
+}
+
+// Empty request for Bluehenge Version
+message VersionRequest {}
+
+// Lists the version of the Bluehenge server.
+message VersionResponse {
+  // Version of the Bluehenge server/engine
+  string bluehenge = 1;
+  // Diatheke Version Response
+  cobaltspeech.diatheke.v3.VersionResponse diatheke_version_response = 2;
+}
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {
+  cobaltspeech.diatheke.v3.ListModelsRequest diatheke_list_models_request = 1;
+}
+
+// A list of models available on the Bluehenge server.
+message ListModelsResponse {
+  cobaltspeech.diatheke.v3.ListModelsResponse diatheke_list_models_response = 1;
+}
+
+// The top-level message sent by the client for the `CreateSession` method.
+message CreateSessionRequest {
+  cobaltspeech.diatheke.v3.CreateSessionRequest diatheke_create_session_request = 1;
+}
+
+// The top-level message sent by the server for the `CreateSession` method.
+message CreateSessionResponse {
+  cobaltspeech.diatheke.v3.CreateSessionResponse diatheke_create_session_response = 1;
+}
+
+// The top-level message sent by the client for the `DeleteSession` method.
+message DeleteSessionRequest {
+  cobaltspeech.diatheke.v3.DeleteSessionRequest diatheke_delete_session_request = 1;
+}
+
+// The top-level message sent by the server for the `DeleteSession` method.
+message DeleteSessionResponse {
+  cobaltspeech.diatheke.v3.DeleteSessionResponse diatheke_delete_session_response = 1;
+}
+
+// The top-level message sent by the client for the `UpdateSession` method.
+message UpdateSessionRequest {
+  cobaltspeech.diatheke.v3.UpdateSessionRequest diatheke_update_session_request = 1;
+}
+
+// The top-level message sent by the server for the `UpdateSession` method.
+message UpdateSessionResponse {
+  cobaltspeech.diatheke.v3.UpdateSessionResponse diatheke_update_session_response = 1;
+}
+
+// The top-level message sent by the client for the `StreamASR` method.
+message StreamASRRequest {
+  cobaltspeech.diatheke.v3.StreamASRRequest diatheke_stream_asr_request = 1;
+}
+
+// The top-level message sent by the server for the `StreamASR` method.
+message StreamASRResponse {
+  // could be streamASRresponse instead of data
+  cobaltspeech.diatheke.v3.StreamASRResponse diatheke_stream_asr_response = 1;
+}
+
+// The top-level message sent by the client for the `StreamTTS` method.
+message StreamTTSRequest {
+  cobaltspeech.diatheke.v3.StreamTTSRequest diatheke_stream_tts_request = 1;
+}
+
+// The top-level message sent by the server for the `StreamTTS` method.
+message StreamTTSResponse {
+  bytes audio = 1;
+}
+
+// The top-level message sent by the client for the `Transcribe` method.
+message TranscribeRequest {
+  cobaltspeech.diatheke.v3.TranscribeRequest diatheke_transcribe_request = 1;
+}
+
+// The top-level message sent by the server for the `Transcribe` method.
+message TranscribeResponse {
+  cobaltspeech.diatheke.v3.TranscribeResponse diatheke_transcribe_response = 1;
+}
+
+// Request for a complete list of all procedures.
+message ListProceduresRequest {}
+
+// List of all procedures.
+// Helpful for displaying a directory or table of contents.
+message ListProceduresResponse {
+  // List of individual procedures. For efficiency, does not
+  // return all the information for each step, just the high-level details.
+  repeated ProcedureLite procedures = 1;
+}
+
+// Input to get a single procedure by its id.
+message GetProcedureRequest {
+  // name to identify a single procedure
+  string name = 1;
+}
+
+// Returns all data related to a single procedure.
+message GetProcedureResponse {
+  // Individual procedure requested.
+  Procedure procedure = 1;
+}
+
+// A simplified representation of a procedure.
+// See Procedure for full details of a procedure.
+//
+// ProcedureLite is useful for getting a full list of all procedures
+// without getting all of the underlying data related to all tasks and steps.
+message ProcedureLite {
+  // Unique ID of the procedure
+  string id = 1;
+  // User facing name of the procedure
+  string procedure_name = 2;
+  // Information related to where the Procedure is in the manual PDF used to generate the data.
+  string page = 3;
+  // Number of the procedure, as defined by the manual.
+  string procedure_number = 4;
+  // Information related to the tasks related to the procedure.
+  repeated TaskLite tasks = 5;
+}
+
+// A simplified representation of a task.
+// Useful for getting a full list of all Tasks without
+// getting all of the underlying data related to the steps.
+message TaskLite {
+  // Unique ID of the task
+  string id = 1;
+  // User facing name of the task
+  string task_name = 2;
+  // Number of the task, as defined by the manual.
+  string task_number = 3;
+}
+
+// Full representation of a procedure, including all sub tasks and steps.
+// See also ProcedureLite.
+message Procedure {
+  // Unique ID of the procedure
+  string id = 1;
+  // User facing name of the procedure
+  string name = 2;
+  // Number of the procedure, as defined by the manual.
+  string procedure_number = 3;
+  // AdditionalNames of the task
+  // Other ways to  refer to the Procedure.
+  repeated string additional_names = 4;
+  // A caution that the user should hear before starting work
+  string prerequisites_warning_text = 5;
+  // List of all Tasks inside of a procedure.
+  repeated Task tasks = 6;
+}
+
+// Data of a task within a procedure
+message Task {
+  // Unique ID of the task
+  string id = 1;
+  // User facing name of the task
+  string task_name = 2;
+  // Number of the task, as defined by the manual.
+  string task_number = 3;
+  // AdditionalNames of the task
+  // Other ways to  refer to the task. See comment in `Procedure`
+  repeated string additional_names = 4;
+  // WarningText of the task
+  // A specific warning before starting the task
+  string warning_text = 5;
+  // List of steps of the task
+  repeated StepData steps = 6;
+}
+
+// Data of a step within a task
+message StepData {
+  // Unique ID of the step
+  string id = 1;
+  // Instructions of the step, pulled directly from the manual.
+  string instruction_text = 2;
+  // Summary of the step, helpful for giving a shorter summary of the instruction_text.
+  // Not always populated.  When not populated, instruction_text should be used.
+  string summary_text = 3;
+  // DisplayLabelText of the step
+  string person = 4;
+  // Number of the Task to which this step belongs.
+  string task_number = 5;
+  // Number of the task, as defined by the manual.
+  string step_number = 6;
+  // Page number the step is located at in the pdf.
+  string page = 7;
+  // the type of the step (instruction, warning, step, note). For TTS.
+  string segment_type = 8;
+  // Image of the step
+  // A URL or relative path to where the multiple media is stored
+  repeated string image = 9;
+  // List of notes of the step
+  // User defined notes associated with this specific step
+  repeated Note notes = 10;
+}
+
+// User defined notes.
+message Note {
+  // Text of the note
+  string text = 1;
+}
+
+// Input to save a note
+message SaveNoteRequest {
+  // Text of a note to save
+  string text = 1;
+  // Step id of a note to save
+  string step_id = 2;
+}
+
+// Empty response once the note is saved
+message SaveNoteResponse {}
+
+// Input to get the entity of an image
+message GetEntityImageDataRequest {
+  // Id of an entity image
+  string id = 1;
+}
+
+// Output of get entity image
+message GetEntityImageDataResponse {
+  // List of images data.
+  repeated ImageData image_data_list = 1;
+}
+
+// Data related to an image.
+message ImageData {
+  // Unique ID of an image.
+  string id = 1;
+  // File path of an image.  Should be sent to the http server to get the actual image.
+  string http_path = 2;
+  // Caption of an image. i.e. "Figure 4.3: removal of alternator"
+  string caption = 3;
+}
