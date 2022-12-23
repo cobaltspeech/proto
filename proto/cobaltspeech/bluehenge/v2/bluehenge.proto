@@ -16,28 +16,56 @@ package cobaltspeech.bluehenge.v2;
 
 import "google/api/annotations.proto";
 
+// Bluehenge is designed to help with the maintainance and repair of specific hardware.
+// When paired with other cobalt offerings, it can provide a hands-free virtual assistant for technicians.
+//
+// Data is extracted from repair manuals and stored in a knowledge graph database.
+// During the extraction process, links back to the original PDFs are noted.  
+// Procedure data will link back to the PDFs for convenience.
+//
+// Repair/maintainance steps are broken down into Procedures, Tasks, and Steps.
+// A Procedure would be a full service item, such as replacing an alternator.
+// A Task would be to remove the old alternator or install the new one.
+// A Step would be to remove the 4 bolts that mount the alternator.
+//
+// This API often referes to names and numbers for each procedure, task, and step.
+// Procedure numbers are often in the form of Chapter.Section.  i.e. 4.2 or 4-2.
+// Task numbers extend that the procedure number.  4.2.3 or 4-2-3.
+// Steps are a simple count after the procedure number.  4.2.3 step #5.
+// Because of the variety of user manuals, these names/numbers will all be treated as strings. 
+// Each application will be responsible for any string manipulation they need.
+//
+// TODO: with the separation of Diatheke, we might need to have some sort of reference to which diatheke model a bluehenge deployment relates to.
+//       i.e. clients should call BluehengeService.Version, which returns a diatheke.ModelID.  Then they call Diatheke.StartSesstion(model: bhversion.diathekeModelID)
 service BluehengeService {
   // Returns version information of the Bluehenge server.
   rpc Version(VersionRequest) returns (VersionResponse) {
     option (google.api.http) = {get: "/api/v2/version"};
   }
 
-  // It sends an empty request and gets as response a list of all the procedures stored in the knowledge graph
+  // Returns a list of all the procedures.
+  // This list is contains a simplified representation of the procedures, 
+  // which can be helpful for displaying a directory or table of contents.
+  // The full details of an individual procedure can be retrieved via GetProcedure.
   rpc ListProcedures(ListProceduresRequest) returns (ListProceduresResponse) {
     option (google.api.http) = {get: "/api/v2/listprocedures"};
   }
 
-  // Gets a single procedure identified by id
-  rpc GetProcedures(GetProceduresRequest) returns (GetProceduresResponse) {
-    option (google.api.http) = {get: "/api/v2/getprocedures"};
+  // Gets a single procedure identified by id.
+  // The response returns everything you should need to be able to display the Procedure and it's Steps and Tasks to the user.
+  rpc GetProcedure(GetProcedureRequest) returns (GetProcedureResponse) {
+    option (google.api.http) = {get: "/api/v2/getprocedure"};
   }
 
-  // Saves a note in a specific step during a procedure
+  // Saves a note in a specific step during a procedure.
+  // TODO: expand this to support adding personal/general notes.
+  // TODO: expand this to support notes on a specific hardware, instead of just a procedure.
   rpc SaveNote(SaveNoteRequest) returns (SaveNoteResponse) {
     option (google.api.http) = {get: "/api/v2/savenote"};
   }
 
-  // Gets the data related with an image.  The actual image will be served over HTTP.
+  // Gets the data related with an image.
+  // The actual image will be served over HTTP.
   rpc GetEntityImage(GetEntityImageRequest) returns (GetEntityImageResponse) {
     option (google.api.http) = {get: "/api/v2/getentityimage"};
   }
@@ -48,99 +76,159 @@ message VersionRequest {}
 
 // Lists the version of the Bluehenge server.
 message VersionResponse {
-  // Bluehenge engine
+  // Version of the Bluehenge server/engine
   string bluehenge = 1;
 }
 
-// Empty request to get the procedures stored in the knowledge graph
+// Request for a complete list of all procedures.
 message ListProceduresRequest {}
 
-// List of procedures from Gremlin
+// List of all procedures.
+// Helpful for displaying a directory or table of contents.
 message ListProceduresResponse {
-  // Repeated (list) procedures from Gremlin/knowledge graph
-  repeated GetProceduresResponse procedures = 1;
+  // List of individual procedures.
+  repeated ProcedureLite procedures = 1;
 }
 
-// Input to get a single procedure by its id
-message GetProceduresRequest {
-  // Id to identify a single procedure
+// Input to get a single procedure by its id.
+message GetProcedureRequest {
+  // ID to identify a single procedure
   string id = 1;
 }
 
-// Procedure from Gremlin
-message GetProceduresResponse {
-  // Id of the procedure
+// Returns all data related to a single procedure.
+message GetProcedureResponse {
+  // Individual procedure requested.
+  Procedure procedure = 1;
+}
+
+// A simplified representation of a procedure.
+// See Procedure for full details of a procedure.
+//
+// ProcedureLite is useful for getting a full list of all procedures 
+// without getting all of the underlying data related to all tasks and steps.
+message ProcedureLite {
+  // Unique ID of the procedure
   string id = 1;
-  // Name of the procedure
+
+  // User facing name of the procedure
+  string procedure_name = 2;
+
+  // Information related to where the Procedure is in the manual PDF used to generate the data.
+  string page = 3;
+
+  // Number of the procedure, as defined by the manual.
+  string procedure_number = 4;
+
+  // Information related to the tasks related to the procedure.
+  repeated TaskLite tasks = 5;
+}
+
+// A simplified representation of a task.
+// Useful for getting a full list of all Tasks without
+// getting all of the underlying data related to the steps.
+message TaskLite {
+  // Unique ID of the task
+  string id = 1;
+  // User facing name of the task
+  string task_name = 2;
+  // Number of the task, as defined by the manual.
+  string task_number = 3;
+}
+
+// Full representation of a procedure, including all sub tasks and steps.
+// See also ProcedureLite.
+message Procedure {
+  // Unique ID of the procedure
+  string id = 1;
+  // User facing name of the procedure
   string name = 2;
-  // Number of the procedure
+  // Number of the procedure, as defined by the manual.
   string procedure_number = 3;
   // AdditionalNames of the task
-  string additional_names = 4; // This will be repeated
-  // InputConditions text of the procedure
-  string input_conditions = 5; // This will be inputConditions
+  // TODO: explain how these are used/useful.
+  repeated string additional_names = 4;
+  // InputConditions text of the procedure.
+  // TODO: explain how these are used/useful.
+  InputConditionData input_conditions = 5;
   // Prerequisites of the procedure
+  // TODO: explain how these are used/useful.
   string prerequisites_warning_text = 6;
-  // List of Task data of the procedure
-  repeated TaskData tasks = 7;
+  // List of all Tasks inside of a procedure.
+  repeated Task tasks = 7;
 }
 
 // Data of InputConditions within a procedure
+// TODO: explain how these are used/useful.  i.e. this is the starting state that the procedure requires.
 message InputConditionData {
-  // Id of the task
+  // Unique id of the input condition.
   string id = 1;
   // Applicability of the task
+  // TODO: explain how this is used/useful.
   string applicability = 2;
   // RequiredConditions of the task
+  // TODO: explain how this is used/useful.
   string required_conditions = 3;
   // List of personnel of the task
-  string personnel = 4; // This will be repeated
+  // TODO: explain how this is used/useful.
+  repeated string personnel = 4;
   // List of supportEquipment of the task
-  string support_equipment = 5; // This will be repeated
+  // TODO: explain how this is used/useful.
+  repeated string support_equipment = 5;
   // List of additionalData of the task
-  string additional_data = 6; // This will be repeated
+  // TODO: explain how this is used/useful.
+  repeated string additional_data = 6;
 }
 
-// Data of tasks within a procedure
-message TaskData {
-  // Id of the task
+// Data of a task within a procedure
+message Task {
+  // Unique ID of the task
   string id = 1;
-  // TaskName of the task
+  // User facing name of the task
   string task_name = 2;
-  // TaskNumber of the task
+  // Number of the task, as defined by the manual.
   string task_number = 3;
   // AdditionalNames of the task
-  string additional_names = 4; // This will be repeated
+  // TODO: explain how these are used/useful.
+  repeated string additional_names = 4;
   // WarningText of the task
+  // TODO: explain how these are used/useful.
   string warning_text = 5;
   // List of steps of the task
   repeated StepData steps = 6;
 }
 
-// Data of steps within a task
+// Data of a step within a task
 message StepData {
-  // Id of the step
+  // Unique ID of the step
   string id = 1;
-  // Instructions of the step
+  // Instructions of the step, pulled directly from the manual.
   string instruction_text = 2;
-  // Summary of the step
+  // Summary of the step, helpful for giving a shorter summary of the instruction_text.
+  // Not always populated.  When not populated, instruction_text should be used.
   string summary_text = 3;
   // DisplayLabelText of the step
   string person = 4;
-  // TaskNumber of the step
+  // Number of the Task to which this step belongs.
   string task_number = 5;
-  // StepNumber of the step
+  // Number of the task, as defined by the manual.
   string step_number = 6;
   // Image of the step
+  // TODO: explain how these are used/useful.  i.e. is this a url they should get?
+  // TODO: should this be repeated?
   string image = 7;
   // List of notes of the step
-  repeated Notes notes = 8;
+  // TODO: explain how these are used/useful.
+  // TODO: we should figure out how to support different use cases of notes.  It might be better to have a getNotes() and not include notes here.
+  repeated Note notes = 8;
 }
 
-// Notes of a step
-message Notes {
+// User defined notes.
+message Note {
   // Text of the note
   string text = 1;
+
+  // TODO: add in other fields for other use cases related to notes.
 }
 
 // Input to save a note
@@ -155,23 +243,23 @@ message SaveNoteRequest {
 message SaveNoteResponse {}
 
 // Input to get the entity of an image
-message GetEntityImageRequest {
+message GetEntityImageDataRequest {
   // Id of an entity image
   string id = 1;
 }
 
 // Output of get entity image
-message GetEntityImageResponse {
-  // List of images data
+message GetEntityImageDataResponse {
+  // List of images data.
   repeated ImageData image_data_list = 1;
 }
 
-// Data from an image
+// Data related to an image.
 message ImageData {
-  // Id of an image
+  // Unique ID of an image.
   string id = 1;
-  //File path of an image
-  string file_path = 2;
-  // Caption of an image
+  // File path of an image.  Should be sent to the http server to get the actual image.
+  string http_path = 2;
+  // Caption of an image. i.e. "Figure 4.3: removal of alternator"
   string caption = 3;
 }
