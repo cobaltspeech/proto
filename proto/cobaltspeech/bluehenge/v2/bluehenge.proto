@@ -20,7 +20,7 @@ import "google/api/annotations.proto";
 // When paired with other cobalt offerings, it can provide a hands-free virtual assistant for technicians.
 //
 // Data is extracted from repair manuals and stored in a knowledge graph database.
-// During the extraction process, links back to the original PDFs are noted.  
+// During the extraction process, links back to the original PDFs are noted.
 // Procedure data will link back to the PDFs for convenience.
 //
 // Repair/maintainance steps are broken down into Procedures, Tasks, and Steps.
@@ -32,7 +32,7 @@ import "google/api/annotations.proto";
 // Procedure numbers are often in the form of Chapter.Section.  i.e. 4.2 or 4-2.
 // Task numbers extend that the procedure number.  4.2.3 or 4-2-3.
 // Steps are a simple count after the procedure number.  4.2.3 step #5.
-// Because of the variety of user manuals, these names/numbers will all be treated as strings. 
+// Because of the variety of user manuals, these names/numbers will all be treated as strings.
 // Each application will be responsible for any string manipulation they need.
 //
 // TODO: with the separation of Diatheke, we might need to have some sort of reference to which diatheke model a bluehenge deployment relates to.
@@ -44,7 +44,7 @@ service BluehengeService {
   }
 
   // Returns a list of all the procedures.
-  // This list is contains a simplified representation of the procedures, 
+  // This list is contains a simplified representation of the procedures,
   // which can be helpful for displaying a directory or table of contents.
   // The full details of an individual procedure can be retrieved via GetProcedure.
   rpc ListProcedures(ListProceduresRequest) returns (ListProceduresResponse) {
@@ -105,7 +105,7 @@ message GetProcedureResponse {
 // A simplified representation of a procedure.
 // See Procedure for full details of a procedure.
 //
-// ProcedureLite is useful for getting a full list of all procedures 
+// ProcedureLite is useful for getting a full list of all procedures
 // without getting all of the underlying data related to all tasks and steps.
 message ProcedureLite {
   // Unique ID of the procedure
