@@ -194,5 +194,5 @@ message Entity {
   uint32 end = 4;
 
   // confidence is the confidence value between 0 and 1 for the given entity.
-  float confidence = 5;
+  double confidence = 5;
 }
