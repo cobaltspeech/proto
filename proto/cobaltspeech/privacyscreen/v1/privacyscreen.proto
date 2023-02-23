@@ -1,0 +1,254 @@
+// Copyright (2023--present) Cobalt Speech and Language Inc.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.privacyscreen.v1;
+
+import "google/api/annotations.proto";
+
+// Service that implements the Cobalt Privacy Screen API.
+service PrivacyScreenService {
+  // Returns version information from the server.
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {get: "/api/v1/version"};
+  }
+
+  // ListModels returns information about the models the server can access.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {get: "/api/v1/listmodels"};
+  }
+
+  // redacts transcript using a redaction engine that is configured with the
+  // provided redaction configuration.
+  rpc RedactTranscript(RedactTranscriptRequest) returns (RedactTranscriptResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/redact_transcript"
+      body: "*"
+    };
+  }
+
+  // Performs bidirectional streaming redaction on transcribed audio. Receive
+  // redacted audio while sending audio. The transcription of audio data must be
+  // ready before sending the audio.
+  rpc StreamingRedactTranscribedAudio(stream StreamingRedactTranscribedAudioRequest) returns (stream StreamingRedactTranscribedAudioResponse) {
+    option (google.api.http) = {get: "/api/v1/redact_transcribed_audio"};
+  }
+
+  // Performs bidirectional streaming speech recognition and redaction. Receive
+  // redacted audio and transcriptions while sending audio.
+  rpc StreamingTranscribeAndRedact(stream StreamingTranscribeAndRedactRequest) returns (stream StreamingTranscribeAndRedactResponse) {
+    option (google.api.http) = {get: "/api/v1/transcribed_and_redact"};
+  }
+}
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
+
+// The top-level message sent by the server for the `Version` method.
+message VersionResponse {
+  // Version of the server handling these requests.
+  string version = 1;
+}
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {}
+
+// The message returned to the client by the `ListModels` method.
+message ListModelsResponse {
+  // List of models available for use on Privacy Screen server.
+  repeated ModelInfo models = 1;
+}
+
+// The top-level messages sent by the client for the `RedactTranscript`
+// method. Contains redaction config and a transcription to redact.
+message RedactTranscriptRequest {
+  // redaction config
+  RedactionConfig config = 1;
+
+  // transcription to redact
+  Transcript transcript = 2;
+}
+
+// The top-level message sent by the server for the `RedactTranscript`
+// method. Contains redacted transcript.
+message RedactTranscriptResponse {
+  Transcript transcript = 1;
+}
+
+// The top-level messages sent by the client for the `StreamingRedactTranscribedAudio`
+// method. In this streaming call, multiple `StreamingRedactTranscribedAudioRequest`
+// messages should be sent. The first message must contain a
+// `RedactTranscribedAudioConfig` message only and all subsequent messages must
+// contain audio data only.
+message StreamingRedactTranscribedAudioRequest {
+  oneof request {
+    RedactTranscribedAudioConfig config = 1;
+    bytes audio = 2;
+  }
+}
+
+// The top-level message sent by the server for the `StreamingRedactTranscribedAudio`
+// method. In this streaming call, multiple `StreamingRedactTranscribedAudioResponse`
+// messages contain either `Utterance` or redacted audio data will be returned.
+message StreamingRedactTranscribedAudioResponse {
+  oneof result {
+    Utterance utterance = 1;
+    bytes audio = 2;
+  }
+}
+
+// The top-level messages sent by the client for the `StreamingTranscribeAndRedact`
+// method. In this streaming call, multiple `StreamingTranscribeAndRedactRequest`
+// messages should be sent. The first message must contain a `TranscribeAndRedactConfig`
+// message only and all subsequent messages must contain audio data only.
+message StreamingTranscribeAndRedactRequest {
+  oneof request {
+    TranscribeAndRedactConfig config = 1;
+    bytes audio = 2;
+  }
+}
+
+// The top-level message sent by the server for the `StreamingTranscribeAndRedact`
+// method. In this streaming call, multiple `StreamingTranscribeAndRedactResponse`
+// messages contain either `TranscribeAndRedactUtterance` or redacted audio data
+// will be returned.
+message StreamingTranscribeAndRedactResponse {
+  oneof result {
+    TranscribeAndRedactUtterance utterance = 1;
+    bytes audio = 2;
+  }
+}
+
+// Description of a Cobalt Privacy Screen Model
+message ModelInfo {
+  // Unique identifier of the model. This identifier is used to choose the model
+  // that should be used for recognition, and is specified in the `RedactionConfig`
+  // message.
+  string id = 1;
+
+  // Model name. This is a concise name describing the model, and may be
+  // presented to the end-user, for example, to help choose which model to use
+  // for their recognition task.
+  string name = 2;
+
+  // List of supported redaction classes.
+  repeated string redaction_classes = 3;
+}
+
+// Configuration for setting up a `StreamingRedactTranscribedAudio` method.
+message RedactTranscribedAudioConfig {
+  // Text redaction config.
+  RedactionConfig redaction_config = 1;
+
+  // Transcription of the entire audio. This must be ready before sending the audio.
+  Transcript transcript = 2;
+}
+
+// Configuration for setting up a `StreamingTranscribeAndRedact` method.
+message TranscribeAndRedactConfig {
+  // Text redaction config.
+  RedactionConfig redaction_config = 1;
+
+  // This is an optional field. If this is set to `true`, each utterance result
+  // will include unredacted utterance. If set to `false`, no unredacted utterance
+  // will be returned. The default is `false`.
+  bool enable_unredacted_transcript = 2;
+}
+
+// Configuration for setting up a redaction engine.
+message RedactionConfig {
+  // Unique identifier of the model to use, as obtained from a `ModelInfo` message.
+  string model_id = 1;
+
+  // List of whitelisted redaction classes. If the list is empty, server default
+  // redaction class list will be considered.
+  repeated string redaction_classes = 2;
+
+  // This is an optional field. If this is set to `true`, Cobalt Privacy Screen will
+  // redact entire transcript at once, by doing so, redaction accuracy will increase
+  // at the cost of higher latency. If set to `false`, Cobalt Privacy Screen will
+  // redact one utterance at a time and return the result as soon as possible. The
+  // default is `false`.
+  bool disable_streaming = 3;
+}
+
+// Transcript contains multiple utterance of the audio.
+message Transcript {
+  repeated Utterance utterances = 1;
+}
+
+// Output utterance from `StreamingTranscribeAndRedact` method.
+message TranscribeAndRedactUtterance {
+  // Redacted utterance.
+  Utterance redacted = 1;
+
+  // Unredacted utterance. This is available only if `enable_unredacted_transcript`
+  // was set to `true` in the `RedactionConfig`.
+  Utterance unredacted = 2;
+}
+
+// Utterance of the audio
+message Utterance {
+  // Channel of the audio file associate with this utterance. Channels
+  // are 0-indexed, so the for mono audio data, this value will always be 0.
+  uint32 audio_channel = 2;
+
+  // Time offset in milliseconds relative to the beginning of audio
+  // corresponding to the start of this utterance.
+  uint64 start_time_ms = 3;
+
+  // Duration in milliseconds of the current utterance in the audio.
+  uint64 duration_ms = 4;
+
+  // ASR confidence estimate between 0 and 1. A higher number represents a
+  // higher likelihood of the output being correct. This remains the same
+  // value for pretranscribed input.
+  double asr_confidence = 5;
+
+  // Words corresponding to the utterance. This field contains word-level timestamps,
+  // which are essential input for audio redaction.
+  repeated Word words = 7;
+}
+
+// Word represents a token in a utterance.
+message Word {
+  // The actual word corresponding to the utterance.
+  string text = 1;
+
+  // ASR confidence estimate between 0 and 1. A higher number represents a
+  // higher likelihood that the word was correctly recognized. This remains
+  // the same value for pretranscribed input.
+  double asr_confidence = 2;
+
+  // Time offset in milliseconds relative to the beginning of audio received by
+  // the recognizer and corresponding to the start of this spoken word.
+  uint64 start_time_ms = 3;
+
+  // Duration in milliseconds of the current word in the spoken audio.
+  uint64 duration_ms = 4;
+
+  // If this is set to true, it denotes that the curent word is redacted word
+  // or an original word of a redacted word.
+  bool is_redacted = 5;
+
+  // Recognized redaction class. This is available only if the current word
+  // is a redacted word.
+  string redaction_class = 6;
+
+  // Redactio confidence estimate between 0 and 1. A higher number represents
+  // a higher likelihood that the word was correctly recognized. This is
+  // available only if the current word is a redacted word.
+  double redaction_confidence = 7;
+}
