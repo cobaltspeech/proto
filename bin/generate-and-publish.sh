@@ -18,6 +18,7 @@ mv gen/go/{gw,cobaltspeech} go-genproto/
 pushd go-genproto
 go get -u ./...
 go mod tidy
+git add .
 git diff --quiet HEAD || git commit -am "auto-update: proto=$protorev"
 git push origin master
 popd
