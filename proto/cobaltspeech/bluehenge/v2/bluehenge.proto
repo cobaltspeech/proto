@@ -123,11 +123,32 @@ service BluehengeService {
     option (google.api.http) = {get: "/api/v2/listprocedures"};
   }
 
+  // Returns a list of all the trees.
+  // This list is contains a simplified representation of the trees,
+  // which can be helpful for displaying a directory or table of contents.
+  // The full details of an individual tree can be retrieved via GetTree.
+  rpc ListTrees(ListTreesRequest) returns (ListTreesResponse) {
+    option (google.api.http) = {get: "/api/v2/listtrees"};
+  }
+
   // Gets a single procedure identified by id.
   // The response returns everything you should need to be able to display the Procedure and it's Steps and Tasks to the user.
   rpc GetProcedure(GetProcedureRequest) returns (GetProcedureResponse) {
     option (google.api.http) = {
       post: "/api/v2/getprocedure"
+      body: "*"
+    };
+  }
+
+  // Gets a single tree identified by id.
+  // Trees contain instructions followed by questions to help users
+  // diagnose problems. The answers at each step point to another
+  // TreeNode to continue the diagnosis. This response returns an
+  // information bearing Tree struct with a list of its TreeNodes in
+  // a linear order starting with the first one the user should see.
+  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/gettree"
       body: "*"
     };
   }
@@ -243,6 +264,17 @@ message ListProceduresResponse {
   repeated ProcedureLite procedures = 1;
 }
 
+// Request for a complete list of all trees.
+message ListTreesRequest {}
+
+// List of all trees.
+// Helpful for displaying a directory or table of contents.
+message ListTreesResponse {
+  // List of individual trees. For efficiency, does not
+  // return all the information for each step, just the high-level details.
+  repeated TreeLite trees = 1;
+}
+
 // Input to get a single procedure by its id.
 message GetProcedureRequest {
   // name to identify a single procedure
@@ -253,6 +285,18 @@ message GetProcedureRequest {
 message GetProcedureResponse {
   // Individual procedure requested.
   Procedure procedure = 1;
+}
+
+// Input to get a single tree by its id.
+message GetTreeRequest {
+  // name to identify a single tree
+  string name = 1;
+}
+
+// Returns all data related to a single tree.
+message GetTreeResponse {
+  // Individual tree requested.
+  Tree tree = 1;
 }
 
 // A simplified representation of a procedure.
@@ -283,6 +327,20 @@ message TaskLite {
   string task_name = 2;
   // Number of the task, as defined by the manual.
   string task_number = 3;
+}
+
+// A simplified representation of a tree.
+// See Tree for full details of a tree.
+//
+// TreeLite is useful for getting a full list of all trees
+// without getting all of the underlying data related to its TreeNodes.
+message TreeLite {
+  // Unique ID of the tree
+  string id = 1;
+  // User facing name of the tree
+  string tree_name = 2;
+  // Number of the tree, as defined by the manual.
+  string tree_number = 3;
 }
 
 // Full representation of a procedure, including all sub tasks and steps.
@@ -346,6 +404,45 @@ message StepData {
   // List of notes of the step
   // User defined notes associated with this specific step
   repeated Note notes = 10;
+}
+
+// Representation of the root node of a troubleshooting Tree.
+// Contains general information about tree and all child nodes.
+message Tree {
+  // Unique ID of the tree
+  string id = 1;
+  // User facing name of the tree
+  string tree_name = 2;
+  // Number of the tree, as defined by the manual.
+  string tree_number = 3;
+  // AdditionalNames of the task
+  // Other ways to refer to the tree.
+  repeated string additional_names = 4;
+  // A caution that the user should hear before starting work
+  string prerequisites_warning_text = 5;
+  // Ordered list (not any treelike structure) of all nodes inside of a tree.
+  repeated TreeNode nodes = 6;
+}
+
+// Representation of single node in a Tree.
+message TreeNode {
+  // Unique ID of the tree
+  string id = 1;
+  // Index/key of node in the tree
+  string node_index = 2;
+  // Instructions of the step, pulled directly from the manual.
+  string instruction_text = 3;
+  // List of troubleshooting options at given step
+  repeated TroubleOptions options = 4;
+}
+
+// User defined notes.
+message TroubleOptions {
+  // Condition that needs to be true for next step
+  // e.g. "Yes", "No", "On", "Off", "Has fuel", etc.
+  string condition = 1;
+  // The node_index of the next step
+  string destination = 2;
 }
 
 // User defined notes.
