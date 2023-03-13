@@ -18,15 +18,8 @@
             name = "proto";
             buildInputs = with pkgs; [
               buf
-              grpc
-              grpc-gateway
-              pandoc texlive.combined.scheme-small
-              protobuf
               protoc-gen-doc
-              protoc-gen-go
-              protoc-gen-go-grpc
-              go
-              gitFull
+              git
             ];
 
             shellHook = ''

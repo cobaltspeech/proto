@@ -1,23 +1,53 @@
 version: v1
+
 managed:
   enabled: true
   go_package_prefix:
     default: github.com/cobaltspeech/go-genproto
     except:
       - buf.build/googleapis/googleapis
+
 plugins:
-  - name: go
-    out: gen/go
-    opt: paths=source_relative
-  - name: go-grpc
-    out: gen/go
-    opt: paths=source_relative
-  - name: grpc-gateway
-    out: gen/go/gw
-    opt:
-      - paths=source_relative
-      - standalone=true
+  # Docs
   - name: doc
     out: gen/docs
     opt:
       - ./doc-templates/grpc-md.tmpl,api.md,source_relative
+
+  - plugin: buf.build/grpc-ecosystem/openapiv2
+    out: gen/docs
+
+  #Golang
+  - plugin: buf.build/grpc/go
+    out: gen/go
+    opt: paths=source_relative
+
+  - plugin: buf.build/protocolbuffers/go
+    out: gen/go
+    opt: paths=source_relative
+
+  - plugin: buf.build/grpc-ecosystem/gateway
+    out: gen/go/gw
+    opt:
+      - paths=source_relative
+      - standalone=true
+
+  # Python
+  - plugin: buf.build/grpc/python
+    out: gen/py
+
+  - plugin: buf.build/protocolbuffers/python
+    out: gen/py
+
+  - plugin: buf.build/protocolbuffers/pyi
+    out: gen/py
+
+  # C++
+  - plugin: buf.build/grpc/cpp
+    out: gen/cpp
+
+  - plugin: buf.build/protocolbuffers/cpp
+    out: gen/cpp
+
+  - plugin: buf.build/bufbuild/validate-cpp
+    out: gen/cpp
