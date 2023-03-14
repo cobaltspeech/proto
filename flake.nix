@@ -16,11 +16,7 @@
         shellForPkgs = pkgs:
           pkgs.mkShell {
             name = "proto";
-            buildInputs = with pkgs; [
-              buf
-              protoc-gen-doc
-              git
-            ];
+            buildInputs = with pkgs; [ buf git go protoc-gen-doc ];
 
             shellHook = ''
               export GOPROXY="http://goproxy.in.cobaltspeech.com"

@@ -9,7 +9,7 @@ rm -rf gen
 protorev=$(git describe --always)
 
 # generate all code
-buf generate proto
+buf generate --template buf.gen.cobalt.yaml proto
 
 # publish go code
 git clone git@github.com:cobaltspeech/go-genproto
