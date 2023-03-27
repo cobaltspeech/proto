@@ -31,3 +31,13 @@ plugins:
     opt:
       - paths=source_relative
       - standalone=true
+
+  # Python
+  - plugin: buf.build/grpc/python
+    out: gen/py
+
+  - plugin: buf.build/protocolbuffers/python
+    out: gen/py
+
+  - plugin: buf.build/protocolbuffers/pyi
+    out: gen/py
