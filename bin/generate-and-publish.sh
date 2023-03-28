@@ -29,6 +29,7 @@ git clone git@github.com:cobaltspeech/py-genproto
 rm -rf py-genproto/cobaltspeech
 mv gen/py/cobaltspeech py-genproto/
 pushd py-genproto
+find cobaltspeech -type d -exec touch {}/__init__.py \;
 git add .
 git diff --quiet HEAD || git commit -am "auto-update: proto=$protorev"
 git push origin master
