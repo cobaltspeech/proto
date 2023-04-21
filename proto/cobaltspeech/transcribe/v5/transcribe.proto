@@ -382,11 +382,14 @@ message Model {
 
 // Attributes of a Transcribe Model
 message ModelAttributes {
-  // Audio sample rate supported by the model
+  // Audio sample rate(native) supported by the model
   uint32 sample_rate = 1;
 
   // Attributes specifc to supporting recognition context.
   ContextInfo context_info = 2;
+
+  // Audio sample rates other than the model's native sample rate(sample_rate) that can be accommodated
+  repeated uint32 supported_sample_rates = 3;
 }
 
 // Model information specifc to supporting recognition context.
