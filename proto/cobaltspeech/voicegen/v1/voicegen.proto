@@ -1,0 +1,266 @@
+// Copyright (2023--present) Cobalt Speech and Language Inc.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.voicegen.v1;
+
+import "google/api/annotations.proto";
+
+// Service that implements the Cobalt VoiceGen API.
+service VoiceGenService {
+  // Returns version information from the server.
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {get: "/api/v1/version"};
+  }
+
+  // ListModels returns information about the models the server can access.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {get: "/api/v1/listmodels"};
+  }
+
+  // Performs text to speech synthesis and stream synthesized audio. This
+  // method is only available via GRPC and not via HTTP+JSON. However, a
+  // web browser may use websockets to use this service.
+  rpc StreamingSynthesize(StreamingSynthesizeRequest) returns (stream StreamingSynthesizeResponse) {
+    option (google.api.http) = {get: "/api/v1/synthesize"};
+  }
+}
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
+
+// The top-level message sent by the server for the `Version` method.
+message VersionResponse {
+  // Version of the server handling these requests.
+  string version = 1;
+}
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {}
+
+// The message returned to the client by the `ListModels` method.
+message ListModelsResponse {
+  // List of models available for use on Privacy Screen server.
+  repeated ModelInfo models = 1;
+}
+
+// The top-level messages sent by the client for the `StreamingSynthesize`
+// method.
+message StreamingSynthesizeRequest {
+  SynthesisConfig config = 1;
+  SynthesisText text = 2;
+}
+
+// The top-level message sent by the server for the `StreamingSynthesize`
+// method. In this streaming call, multiple `StreamingSynthesizeResponse`
+// messages contain `SynthesizedAudio`.
+message StreamingSynthesizeResponse {
+  SynthesizedAudio audio = 1;
+}
+
+// Description of a Cobalt VoiceGen Model
+message ModelInfo {
+  // Unique identifier of the model. This identifier is used to choose the model
+  // that should be used for synthesis, and is specified in the
+  // `SynthesisConfig` message.
+  string id = 1;
+
+  // Model name. This is a concise name describing the model, and may be
+  // presented to the end-user, for example, to help choose which model to use
+  // for their synthesis task.
+  string name = 2;
+
+  // Model attributes.
+  ModelAttributes attributes = 3;
+}
+
+// Attributes of a VoiceGen Model
+message ModelAttributes {
+  // Language of the model.
+  string language = 1;
+
+  // The set of phonemes this model uses to represent how words should be pronounced.
+  PhoneSet phone_set = 2;
+
+  // Native audio format of the model. This will be use as default value if audio format
+  // in `SynthesisConfig` is not specify.
+  AudioFormat native_audio_format = 3;
+
+  // Supported model features.
+  ModelFeatures supported_features = 4;
+
+  // List of speaker available for use in this model.
+  repeated SpeakerInfo speakers = 5;
+}
+
+// PhoneSet is a set of phonemes for words pronunciation.
+enum PhoneSet {
+  // PHONE_SET_UNSPECIFIED is the default value of this type.
+  PHONE_SET_UNSPECIFIED = 0;
+
+  // IPA phoneme set
+  PHONE_SET_IPA = 1;
+
+  // X-SAMPA phoneme set
+  PHONE_SET_XSAMPA = 2;
+
+  // ARPAbet phoneme set
+  PHONE_SET_ARPABET = 3;
+}
+
+message ModelFeatures {
+  // This is set to true if the model can be configured to synthesize audio at different
+  // talking speeds.
+  bool speech_rate = 1;
+
+  // This is set to true if the model can be configured to synthesize audio for a given
+  // text input differently than usual by varying stresses, and emphasis on different
+  // parts of the audio. This feature is useful for making the audio sound slightly
+  // different each time to avoid making it feel monotonous.
+  bool variation_scale = 2;
+}
+
+// Description of a speaker
+message SpeakerInfo {
+  // Unique identifier of the speaker. This identifier is used to choose the speaker
+  // that should be used for synthesis, and is specified in the
+  // `SynthesisConfig` message.
+  string id = 1;
+
+  // Speaker name. This is a concise name describing the speaker, and may be
+  // presented to the end-user, for example, to help choose which speaker to use
+  // for their synthesis task.
+  string name = 2;
+
+  // Speaker description. This is may be presented to the end-user, for example, to
+  // help choose which speaker to use for their synthesis task.
+  string description = 3;
+
+  // Speaker attributes.
+  SpeakerAttributes attributes = 4;
+}
+
+// Attributes of a speaker
+message SpeakerAttributes {
+  // Language of the speaker. This can be different from model language.
+  // E.g. an english model with different accents: en-US, en-GB, en-IN etc.
+  string language = 1;
+}
+
+// Configuration for setting up a Synthesizer
+message SynthesisConfig {
+  // Unique identifier of the model to use, as obtained from a `ModelInfo` message.
+  string model_id = 1;
+
+  // Unique identifier of the speaker to use, as obtained from a `SpeakerInfo` message.
+  string speaker_id = 2;
+
+  // Format of the audio to be sent for synthesis. If no value specify, default value
+  // of native audio format of the specified model will be used. Native audio format
+  // can be obtained from `ModelAttributes` message.
+  AudioFormat audio_format = 3;
+
+  // The speech rate for synthesized audio. If unset, then the default speech rate of
+  // a given model is used. Otherwise a value > 0 should be used, with higher values
+  // resulting in faster speech. This field only has an effect on the synthesized audio
+  // if the model supports it, which can be ascertained from the
+  // `ModelAttributes.supported_features`.
+  float speech_rate = 4;
+
+  // A scale with values > 0, to determine how much to randomly vary the synthesized
+  // audio by altering stresses and emphasis on different parts of the audio. Higher
+  // values correspond to greater variation. This field only has an affect on the
+  // synthesized audio if the model supports it, which can be ascertained from the
+  // `ModelAttributes.supported_features`.
+  float variation_scale = 5;
+}
+
+// Details of audio in format
+message AudioFormat {
+  // Sampling rate in Hz.
+  uint32 sample_rate = 1;
+
+  // Number of channels present in the audio. E.g.: 1 (mono), 2 (stereo), etc.
+  uint32 channels = 2;
+
+  // Bit depth of each sample (e.g. 8, 16, 24, 32, etc.).
+  uint32 bit_depth = 3;
+
+  // Codec of the samples.
+  AudioCodec codec = 4;
+
+  // Encoding of the samples.
+  AudioEncoding encoding = 5;
+
+  // Byte order of the samples. This field must be set to a value other than
+  // `BYTE_ORDER_UNSPECIFIED` when the `bit_depth` is greater than 8.
+  ByteOrder byte_order = 6;
+}
+
+// Byte order of multi-byte data
+enum ByteOrder {
+  // BYTE_ORDER_UNSPECIFIED is the default value of this type.
+  BYTE_ORDER_UNSPECIFIED = 0;
+
+  // Little Endian byte order
+  BYTE_ORDER_LITTLE_ENDIAN = 1;
+
+  // Big Endian byte order
+  BYTE_ORDER_BIG_ENDIAN = 2;
+}
+
+// The encoding of the audio data to be sent for synthesis.
+enum AudioEncoding {
+  // AUDIO_ENCODING_UNSPECIFIED is the default value of this type and will
+  // result in an error.
+  AUDIO_ENCODING_UNSPECIFIED = 0;
+
+  // PCM signed-integer
+  AUDIO_ENCODING_SIGNED = 1;
+
+  // PCM unsigned-integer
+  AUDIO_ENCODING_UNSIGNED = 2;
+
+  // PCM IEEE-Float
+  AUDIO_ENCODING_IEEE_FLOAT = 3;
+
+  // G.711 mu-law
+  AUDIO_ENCODING_ULAW = 4;
+
+  // G.711 a-law
+  AUDIO_ENCODING_ALAW = 5;
+}
+
+// The encoding of the audio data to be sent for synthesis.
+enum AudioCodec {
+  // AUDIO_CODEC_UNSPECIFIED is the default value of this type.
+  AUDIO_CODEC_UNSPECIFIED = 0;
+
+  // Raw data without any headers
+  AUDIO_CODEC_RAW = 2;
+
+  // WAV with RIFF headers
+  AUDIO_CODEC_WAV = 1;
+}
+
+// Audio to be sent to the synthesizer
+message SynthesisText {
+  string text = 1;
+}
+
+// Audio to be sent to the synthesizer
+message SynthesizedAudio {
+  bytes data = 1;
+}
