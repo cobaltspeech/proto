@@ -131,6 +131,13 @@ service BluehengeService {
     option (google.api.http) = {get: "/api/v2/listtrees"};
   }
 
+  // Returns a list of all entities.
+  // This list contains every entity in the knowledge graph and can
+  // be used for fuzzy matching or any other time you need everything.
+  rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse) {
+    option (google.api.http) = {get: "/api/v2/listentities"};
+  }
+
   // Gets a single procedure identified by id.
   // The response returns everything you should need to be able to display the Procedure and it's Steps and Tasks to the user.
   rpc GetProcedure(GetProcedureRequest) returns (GetProcedureResponse) {
@@ -157,6 +164,17 @@ service BluehengeService {
   rpc SaveNote(SaveNoteRequest) returns (SaveNoteResponse) {
     option (google.api.http) = {
       post: "/api/v2/savenote",
+      body: "*"
+    };
+  }
+
+  // Gets the data related with an entity extraction triple for a
+  // specific entity-relation pair, e.g. entity:"sky", relation:"has color"
+  // Extractions contain Subject-Relation-Object sets. For example,
+  // entity:"sky", relation:"has color", object:"blue".
+  rpc GetExtractionRelationship(GetExtractionRelationshipRequest) returns (GetExtractionRelationshipResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/getextractionrelationship"
       body: "*"
     };
   }
@@ -461,6 +479,70 @@ message SaveNoteRequest {
 
 // Empty response once the note is saved
 message SaveNoteResponse {}
+
+// Request for a complete list of all entities.
+message ListEntitiesRequest {}
+
+// List of all entities.
+// Helpful for fuzzy matching entity names
+message ListEntitiesResponse {
+  repeated Entity entities = 1;
+}
+
+// Input to get an extraction triple about an entity and relation
+message GetExtractionRelationshipRequest {
+  // Name of entity
+  string name = 1;
+  // Name of Relation
+  string relation = 2;
+}
+
+// Output of GetExtractionRelationship.
+message GetExtractionRelationshipResponse {
+  // The extraction data object.
+  Extraction extraction = 1;
+}
+
+// Extractions contain Subject-Relation-Object sets. For example,
+// subject:"sky", relation:"has color", object:"blue".
+message Extraction {
+  // Unique ID of the extraction in the knowledge graph.
+  string id = 1;
+  // The subject of the extraction
+  Entity subject = 2;
+  // The object of the extraction
+  Entity object = 3;
+  // The relation of the extraction
+  Relation relation = 4;
+}
+
+// Entities are one of the core information storing blocks in
+// the knowledge graph. They can have images or be part of
+// extractions. E.g, in the example "The sky is blue." both
+// "sky" & "blue" are entities.
+message Entity {
+  // Unique ID of the entity in the knowledge graph.
+  string id = 1;
+  // The text associated with the entity
+  Mention mentions = 2;
+}
+
+// Relations are the connections between entities. A relation
+// can relate to any property. E.g, in the example "The sky
+// is blue." the relation is "has color".
+message Relation {
+  // Unique ID of the mention in the knowledge graph.
+  string id = 1;
+  // The text associated with the relation
+  Mention mentions = 2;
+}
+
+// The text asociated with Entities & Relations. If an entity
+// has multiple names, there will be one entity but two mentions.
+message Mention {
+  // Arbitrary text field asociated with Entities & Relations
+  repeated string text = 1;
+}
 
 // Input to get the entity of an image
 message GetEntityImageDataRequest {
