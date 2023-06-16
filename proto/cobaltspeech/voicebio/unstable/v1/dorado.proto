@@ -1,0 +1,149 @@
+syntax = "proto3";
+
+// This later on will be cobaltspeech.voicebio.v1
+package cobaltspeech.voicebio.unstable.v1;
+
+// Service for Cobalt's Voiceprint Generation, Verification, and Identification API
+service DoradoService {
+  // Returns version information from the server.
+  rpc Version(VersionRequest) returns (VersionResponse) {}
+
+  // If the EnrollmentData of the GenerateVoiceprintRequest is nil or empty, this method will generate
+  // a new voiceprint. If there is already data, it will update the voiceprint to incorporate the new audio.
+  rpc GenerateVoiceprint(stream GenerateVoiceprintRequest) returns (GenerateVoiceprintResponse) {}
+
+  // This is a passive verification, using free-form speech. It compares the voiceprint found in the
+  // VerifyVoiceprintRequest to the stream of audio coming in the VerifyVoiceprintRequest and returns a
+  // similarity score in the VerificationResult. Comparing a user with their own voiceprint will usually
+  // result in a score around 20, and comparing a user with another user's voiceprint will usually result
+  // in a score of 0 or less. However, it is the responsibility of the client to decide what score is a
+  // good cutoff between valid and invalid users for their use case.
+  rpc VerifyVoiceprint(stream VerifyVoiceprintRequest) returns (VerifyVoiceprintResponse) {}
+
+  // For a small number of speakers, such as labeling speakers in a multi-speaker transcript, Dorado can be
+  // stateless and all the candidate voiceprints can be passed into the `IdentifySpeakerFromSet` function.
+  // However, the more possible speakers, the slower this method call will be. To support use cases of
+  // searching among larger sets, Dorado may store the voiceprints in memory. Dorado does NOT persist
+  // voiceprints--for security and separation of concerns, storage is the responsibility of the client that
+  // calls Dorado--but the client may pass the stored data to `CacheVoiceprints` when the models are loaded,
+  // then `IdentifySpeaker` subsequently.
+
+  // Calculates the similarity to the incoming audio for the set of voiceprints specified in the
+  // IdentificationRequest and returns the ids of the users with the most similar voiceprints
+  // in the IdentificationResponse. If none of the users are similar, the response will be empty.
+  rpc IdentifySpeakerFromSet(stream IdentifySpeakerFromSetRequest) returns (IdentifySpeakerFromSetResponse) {}
+
+  // Calculates the similarity to the incoming audio for the set of voiceprints that have been added
+  // to the cache in Dorado and returns the ids of the users with the most similar voiceprints in the
+  // IdentifySpeakerResponse. If none of the users are similar, the response will be empty.
+  rpc IdentifySpeaker(stream IdentifySpeakerRequest) returns (IdentifySpeakerResponse) {}
+}
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
+
+// The message returned to the client by the `Version` method.
+message VersionResponse {
+  string version = 1;
+}
+
+message Success {}
+
+// Audio containing the voices of the people being enrolled, verified, or identified.
+message Audio {
+  // Raw buffer of bytes containing the speaker's voice
+  bytes audio = 1;
+}
+
+// A request to generate or update a person's voiceprint
+message GenerateVoiceprintRequest {
+  // The first message sent should be the enrollment data. After that, it streams audio till the audio ends.
+  oneof data {
+    // A struct containing information about someone who has been enrolled (see definition above)
+    EnrollmentData enrollment_data = 1;
+    // A raw buffer of bytes containing the speaker's voice (see definition above)
+    Audio audio = 2;
+  }
+}
+
+// Response with enrollment data with generated voiceprint
+message GenerateVoiceprintResponse {
+  EnrollmentData enrollment_data = 1;
+}
+
+// A message containing information about someone who has been enrolled
+message EnrollmentData {
+  // An array of bytes making up the voiceprint generated from previous enrollment sessions
+  // Each Voiceprint is an array of approximately 200 floating point numbers
+  bytes voiceprint = 1;
+  // Number of times the voiceprint has been updated
+  int32 count = 2;
+  // Model id/version used to generate the voiceprints for backward compatability
+  int32 version = 3;
+  // Cryptographic signature of the entire struct to prevent alteration
+  string cryptographic_signature = 4;
+}
+
+// A request to verify a user based on their enrollment information and the audio
+message VerifyVoiceprintRequest {
+  // The first message sent should be the enrollment data. After that, it streams audio till the audio ends.
+  oneof data {
+    // A struct containing information about someone who has been enrolled (see definition above)
+    EnrollmentData enrollment_data = 1;
+    // A raw buffer of bytes containing the speaker's voice (see definition above)
+    Audio audio = 2;
+  }
+}
+
+// A map of ids to people's enrollment data
+message EnrollmentDataMap {
+  // A map of ids to people's enrollment data (see EnrollmentData definition above)
+  map<string, EnrollmentData> id_to_enrollment_data_map = 1;
+}
+
+message VerifyVoiceprintResponse {
+  VerificationResult verification_result = 1;
+}
+
+// A result containing a number representing the similarity of the user's voice with the provided voiceprint
+message VerificationResult {
+  // Number representing how closely the audio matched the voiceprint
+  float similarity = 1;
+}
+
+// Request to identify speaker from a set of users
+message IdentifySpeakerFromSetRequest {
+  IdentificationRequest request = 1;
+}
+
+// Response
+message IdentifySpeakerFromSetResponse {
+  IdentificationResponse response = 1;
+}
+
+message IdentifySpeakerRequest {
+  IdentificationRequest request = 1;
+}
+
+message IdentifySpeakerResponse {
+  IdentificationResponse response = 1;
+}
+
+// A request to identify someone from a group of people
+message IdentificationRequest {
+  // When sent into the IdentifySpeakerFromSet function, the first message sent should be the enrollment data map.
+  // After that, it streams audio till the audio ends.
+  // With the IdentifySpeaker function, it should only send audio.
+  oneof data {
+    // A map of ids to people's enrollment data (see definition above)
+    EnrollmentDataMap enrollment_data_map = 1;
+    // A raw buffer of bytes containing the speaker's voice (see definition above)
+    Audio audio = 2;
+  }
+}
+
+// A response about how well the voice matched each user
+message IdentificationResponse {
+  // A map of users' ids to a result about how well their voiceprint matched the given audio
+  map<string, VerificationResult> id_to_result_map = 1;
+}
