@@ -1,0 +1,341 @@
+// Copyright (2023--present) Cobalt Speech and Language Inc.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.voicebio.v1;
+
+import "google/api/annotations.proto";
+
+// Service that implements the Cobalt VoiceBio API.
+service VoiceBioService {
+  // Returns version information from the server.
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {get: "/api/v1/version"};
+  }
+
+  // Returns information about the models available on the server.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {get: "/api/v1/listmodels"};
+  }
+
+  // Uses new audio data to perform enrollment of new users, or to update
+  // enrollment of existing users. Returns a new or updated voiceprint.
+  //
+  // Clients should store the returned voiceprint against the ID of the user
+  // that provided the audio. This voiceprint can be provided later, with the
+  // Verify or Identify requests to match new audio against known speakers.
+  //
+  // If this call is used to update an existing user's voiceprint, the old
+  // voiceprint can be discarded and only the new one can be stored for that
+  // user.
+  rpc StreamingEnroll(stream StreamingEnrollRequest) returns (StreamingEnrollResponse) {
+    option (google.api.http) = {get: "/api/v1/streaming_enroll"};
+  }
+
+  // Compares audio data against the provided voiceprint and verifies whether or
+  // not the audio matches against the voiceprint.
+  rpc StreamingVerify(stream StreamingVerifyRequest) returns (StreamingVerifyResponse) {
+    option (google.api.http) = {get: "/api/v1/streaming_verify"};
+  }
+
+  // Compares audio data against the provided list of voiceprints and identifies
+  // which (or none) of the voiceprints is a match for the given audio.
+  rpc StreamingIdentify(stream StreamingIdentifyRequest) returns (StreamingIdentifyResponse) {
+    option (google.api.http) = {get: "/api/v1/streaming_identify"};
+  }
+}
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
+
+// The message sent by the server for the `Version` method.
+message VersionResponse {
+  // Version of the server handling these requests.
+  string version = 1;
+}
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {}
+
+// The message returned to the client by the `ListModels` method.
+message ListModelsResponse {
+  // List of models available for use that match the request.
+  repeated Model models = 1;
+}
+
+// The top level messages sent by the client for the `StreamingEnroll` method.
+// In this streaming call, multiple `StreamingEnrollRequest` messages should be
+// sent. The first message must contain a `EnrollmentConfig` message, and all
+// subsequent messages must contain `Audio` only. All `Audio` messages must
+// contain non-empty audio. If audio content is empty, the server may choose to
+// interpret it as end of stream and stop accepting any further messages.
+message StreamingEnrollRequest {
+  oneof request {
+    EnrollmentConfig config = 1;
+    Audio audio = 2;
+  }
+}
+
+// The message returned by the server for the `StreamingEnroll` method.
+message StreamingEnrollResponse {
+  Voiceprint voiceprint = 1;
+  EnrollmentStatus enrollment_status = 2;
+}
+
+// Configuration for Enrollment of speakers.
+message EnrollmentConfig {
+  // ID of the model to use for enrollment. A list of supported IDs can be found
+  // using the `ListModels` call.
+  string model_id = 1;
+
+  // Format of the audio to be sent for enrollment.
+  AudioFormat audio_format = 2;
+
+  // Empty string for new users. For re-enrolling additional users with new
+  // audio data, set this to that user's previous voiceprint. The previous
+  // voiceprint needs to have been generated using the same model as specified
+  // in this config.
+  Voiceprint previous_voiceprint = 3;
+}
+
+// The message returned as part of StreamingEnrollResponse, to provide
+// information about whether voiceprint is sufficiently trained.
+message EnrollmentStatus {
+  // Whether sufficient data has been provided as part of this user's
+  // enrollment. If this is false, more audio should be collected from the user
+  // and re-enrollment should be done. If this is true, it is still OK to enroll
+  // more data for the same user to update the voiceprint.
+  bool enrollment_complete = 1;
+
+  // If enrollment is not yet complete, how many more seconds of user's speech
+  // are required to complete the enrollment. If enrollment is completed
+  // successfully, this value will be set to 0.
+  uint32 additional_audio_required_seconds = 2;
+}
+
+// The top level messages sent by the client for the `StreamingVerify` method.
+// In this streaming call, multiple `StreamingVerifyRequest` messages should be
+// sent. The first message must contain a `VerificationConfig` message, and all
+// subsequent messages must contain `Audio` only. All `Audio` messages must
+// contain non-empty audio. If audio content is empty, the server may choose to
+// interpret it as end of stream and stop accepting any further messages.
+message StreamingVerifyRequest {
+  oneof request {
+    VerificationConfig config = 1;
+    Audio audio = 2;
+  }
+}
+
+// The message returned by the server for the `StreamingVerify` method.
+message StreamingVerifyResponse {
+  VoiceprintComparisonResult result = 1;
+}
+
+// Message describing the result of comparing a voiceprint against given audio.
+message VoiceprintComparisonResult {
+  // Whether or not the audio successfully matches with the provided voiceprint.
+  bool is_match = 1;
+
+  // Similarity score representing how closely the audio matched against the
+  // voiceprint. This score could be any negative or positive number. Lower
+  // value suggests that the audio and voiceprints are less similar, whereas a
+  // higher value indicates more similarity. The `is_match` field can be used to
+  // actually decide if the result should be considered a valid match.
+  float similarity_score = 2;
+}
+
+// Configuration for Verification of a speaker.
+message VerificationConfig {
+  // ID of the model to use for verification. A list of supported IDs can be
+  // found using the `ListModels` call. The model used for verification must
+  // match with the model used for enrollment.
+  string model_id = 1;
+
+  // Format of the audio to be sent for enrollment.
+  AudioFormat audio_format = 2;
+
+  // Voiceprint with which audio should be compared.
+  Voiceprint voiceprint = 3;
+}
+
+// The top level messages sent by the client for the `StreamingIdentify` method.
+// In this streaming call, multiple `StreamingIdentifyRequest` messages should
+// be sent. The first message must contain a `IdentificationConfig` message, and
+// all subsequent messages must contain `Audio` only. All `Audio` messages must
+// contain non-empty audio. If audio content is empty, the server may choose to
+// interpret it as end of stream and stop accepting any further messages.
+message StreamingIdentifyRequest {
+  oneof request {
+    IdentificationConfig config = 1;
+    Audio audio = 2;
+  }
+}
+
+// The message returned by the server for the `StreamingIdentify` method.
+message StreamingIdentifyResponse {
+  // Index (0-based) of the best matching voiceprint in the list of input
+  // voiceprints provided in the `IdentificationConfig` message. If none of the
+  // voiceprints was a match, a negative value is returned.
+  int32 best_match_index = 1;
+
+  // Result of comparing the given audio against each of the input voiceprints.
+  // The order of this list is the same as the input voiceprint list provided in
+  // the `IdentificationConfig` message.
+  repeated VoiceprintComparisonResult voiceprint_comparison_results = 2;
+}
+
+// Configuration for Identification of a speaker.
+message IdentificationConfig {
+  // ID of the model to use for identification. A list of supported IDs can be
+  // found using the `ListModels` call. The model used for identification must
+  // match with the model used for enrollment.
+  string model_id = 1;
+
+  // Format of the audio to be sent for enrollment.
+  AudioFormat audio_format = 2;
+
+  // Voiceprints of potential speakers that need to be identified in the given
+  // audio.
+  repeated Voiceprint voiceprints = 3;
+}
+
+// Voiceprint extracted from user's audio.
+message Voiceprint {
+  bytes data = 1;
+}
+
+// Format of the audio to be sent for recognition.
+//
+// Depending on how they are configured, server instances of this service may
+// not support all the formats provided in the API. One format that is
+// guaranteed to be supported is the RAW format with little-endian 16-bit
+// signed samples with the sample rate matching that of the model being
+// requested.
+message AudioFormat {
+  oneof audio_format {
+    // Audio is raw data without any headers
+    AudioFormatRAW audio_format_raw = 2;
+
+    // Audio has a self-describing header. Headers are expected to be sent at
+    // the beginning of the entire audio file/stream, and not in every
+    // `Audio` message.
+    //
+    // The default value of this type is AUDIO_FORMAT_HEADERED_UNSPECIFIED. If
+    // this value is used, the server may attempt to detect the format of the
+    // audio. However, it is recommended that the exact format be specified.
+    AudioFormatHeadered audio_format_headered = 3;
+  }
+}
+
+// Details of audio in raw format
+message AudioFormatRAW {
+  // Encoding of the samples. It must be specified explicitly and using the
+  // default value of `AUDIO_ENCODING_UNSPECIFIED` will result in an error.
+  AudioEncoding encoding = 1;
+
+  // Bit depth of each sample (e.g. 8, 16, 24, 32, etc.). This is a required
+  // field.
+  uint32 bit_depth = 2;
+
+  // Byte order of the samples. This field must be set to a value other than
+  // `BYTE_ORDER_UNSPECIFIED` when the `bit_depth` is greater than 8.
+  ByteOrder byte_order = 3;
+
+  // Sampling rate in Hz. This is a required field.
+  uint32 sample_rate = 4;
+
+  // Number of channels present in the audio. E.g.: 1 (mono), 2 (stereo), etc.
+  // This is a required field.
+  uint32 channels = 5;
+}
+
+// Byte order of multi-byte data
+enum ByteOrder {
+  // BYTE_ORDER_UNSPECIFIED is the default value of this type.
+  BYTE_ORDER_UNSPECIFIED = 0;
+
+  // Little Endian byte order
+  BYTE_ORDER_LITTLE_ENDIAN = 1;
+
+  // Big Endian byte order
+  BYTE_ORDER_BIG_ENDIAN = 2;
+}
+
+// The encoding of the audio data to be sent for recognition.
+enum AudioEncoding {
+  // AUDIO_ENCODING_UNSPECIFIED is the default value of this type and will
+  // result in an error.
+  AUDIO_ENCODING_UNSPECIFIED = 0;
+
+  // PCM signed-integer
+  AUDIO_ENCODING_SIGNED = 1;
+
+  // PCM unsigned-integer
+  AUDIO_ENCODING_UNSIGNED = 2;
+
+  // PCM IEEE-Float
+  AUDIO_ENCODING_IEEE_FLOAT = 3;
+
+  // G.711 mu-law
+  AUDIO_ENCODING_ULAW = 4;
+
+  // G.711 a-law
+  AUDIO_ENCODING_ALAW = 5;
+}
+
+enum AudioFormatHeadered {
+  // AUDIO_FORMAT_HEADERED_UNSPECIFIED is the default value of this type.
+  AUDIO_FORMAT_HEADERED_UNSPECIFIED = 0;
+
+  // WAV with RIFF headers
+  AUDIO_FORMAT_HEADERED_WAV = 1;
+
+  // MP3 format with a valid frame header at the beginning of data
+  AUDIO_FORMAT_HEADERED_MP3 = 2;
+
+  // FLAC format
+  AUDIO_FORMAT_HEADERED_FLAC = 3;
+
+  // Opus format with OGG header
+  AUDIO_FORMAT_HEADERED_OGG_OPUS = 4;
+}
+
+// Audio to be sent to VoiceBio.
+message Audio {
+  bytes data = 1;
+}
+
+// Description of a VoiceBio model.
+message Model {
+  // Unique identifier of the model. This identifier is used to choose the model
+  // that should be used for enrollment, verification or identification
+  // requests. This ID needs to be specified in the respective config messages
+  // for these requests.
+  string id = 1;
+
+  // Model name. This is a concise name describing the model, and may be
+  // presented to the end-user, for example, to help choose which model to use
+  // for their voicebio task.
+  string name = 2;
+
+  // Model Attributes
+  ModelAttributes attributes = 3;
+}
+
+// Attributes of a VoiceBio model
+message ModelAttributes {
+  // Audio sample rate (native) supported by the model
+  uint32 sample_rate = 1;
+}
