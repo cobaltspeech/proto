@@ -30,6 +30,15 @@ service PrivacyScreenService {
     option (google.api.http) = {get: "/api/v1/listmodels"};
   }
 
+  // Redact text using a redaction engine that is configured with the provided
+  // redaction configuration.
+  rpc RedactText(RedactTextRequest) returns (RedactTextResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/redact_text"
+      body: "*"
+    };
+  }
+
   // redacts transcript using a redaction engine that is configured with the
   // provided redaction configuration.
   rpc RedactTranscript(RedactTranscriptRequest) returns (RedactTranscriptResponse) {
@@ -69,6 +78,26 @@ message ListModelsRequest {}
 message ListModelsResponse {
   // List of models available for use on Privacy Screen server.
   repeated ModelInfo models = 1;
+}
+
+// The top-level messages sent by the client for the `RedactText`
+// method. Contains redaction config and text to redact.
+message RedactTextRequest {
+  // redaction config
+  RedactionConfig config = 1;
+
+  // text to redact
+  string text = 2;
+}
+
+// The top-level message sent by the server for the `RedactText`
+// method.
+message RedactTextResponse {
+  // Full redacted text.
+  string text = 1;
+
+  // A list contains redacted tokens corresponding to the full text.
+  repeated RedactedToken redacted_tokens = 2;
 }
 
 // The top-level messages sent by the client for the `RedactTranscript`
@@ -195,7 +224,7 @@ message TranscribeAndRedactUtterance {
   Utterance redacted = 1;
 
   // Unredacted utterance. This is available only if `enable_unredacted_transcript`
-  // was set to `true` in the `RedactionConfig`.
+  // was set to `true` in the `TranscribeAndRedactConfig`.
   Utterance unredacted = 2;
 }
 
@@ -247,8 +276,28 @@ message Word {
   // is a redacted word.
   string redaction_class = 6;
 
-  // Redactio confidence estimate between 0 and 1. A higher number represents
+  // Redaction confidence estimate between 0 and 1. A higher number represents
   // a higher likelihood that the word was correctly recognized. This is
   // available only if the current word is a redacted word.
   double redaction_confidence = 7;
+}
+
+// RedactedToken represents each recognized sensitive information to be redacted
+// and related information.
+message RedactedToken {
+  // The original text for the current redacted token.
+  string original_text = 1;
+
+  // Start offset of the original text in the input string.
+  uint64 original_offset = 2;
+
+  // Length of the original text.
+  uint64 original_length = 3;
+
+  // Recognized redaction class.
+  string redaction_class = 4;
+
+  // Redaction confidence estimate between 0 and 1. A higher number represents
+  // a higher likelihood that the word was correctly recognized.
+  double redaction_confidence = 5;
 }
