@@ -79,6 +79,17 @@ service DiathekeService {
   // closes it, a predefined duration of silence (non-speech)
   // occurs, or the end-transcription intent is recognized.
   rpc Transcribe(stream TranscribeRequest) returns (stream TranscribeResponse) {}
+
+  // Performs bidirectional streaming speech recognition. Receive results while
+  // sending audio. Each result will either be a partial ASR result, or a final
+  // result. Partial results will be sent as soon as they are ready, and all
+  // results will be sent, regardless of any wakeword configuration in the
+  // session. A final result will be sent exactly once, and the stream will be
+  // closed then. If a session has a wakeword enabled, the final result will
+  // only be emitted if the required wakeword is present. The ASRResult in the
+  // final message maybe used in the UpdateSession method for further dialog
+  // processing.
+  rpc StreamASRWithPartials(stream StreamASRWithPartialsRequest) returns (stream StreamASRWithPartialsResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.
@@ -339,6 +350,39 @@ message StreamASRRequest {
 
 message StreamASRResponse {
   ASRResult asr_result = 1;
+}
+
+// The top-level messages sent by the client for the `StreamASRWithPartials`
+// method. In this streaming call, multiple `StreamASRWithPartialsRequest`
+// messages should be sent. The first message must contain a `TokenData`
+// message only and all subsequent messages must contain audio data only.
+message StreamASRWithPartialsRequest {
+  oneof data {
+    // Session data, used to determine the correct Cubic
+    // model to use for ASR, with other contextual
+    // information.
+    TokenData token = 1;
+
+    // Audio data to transcribe.
+    bytes audio = 2;
+  }
+}
+
+// The top-level messages sent by the server for the `StreamASRWithPartials`
+// method. This streaming call will return multiple `StreamASRWithPartialsResponse`
+// messages. The messages are multiple messages contain partial recognition
+// result from ASR engine and one last message contain an `ASRResult` that be use
+// to update Diatheke session.
+message StreamASRWithPartialsResponse {
+  oneof data {
+    // An interim partial result, and could change after more audio is processed
+    // and should not be used to update Diatheke session.
+    cobaltspeech.cubic.v5.RecognitionResult partial_result = 1;
+
+    // Final result from ASR engine. This can be use to update Diatheke session
+    // via `UpdateSession` method.
+    ASRResult asr_result = 2;
+  }
 }
 
 // The result from the ASR stream, sent after the ASR engine
