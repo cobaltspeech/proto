@@ -213,7 +213,8 @@ message IdentificationConfig {
 
 // Voiceprint extracted from user's audio.
 message Voiceprint {
-  bytes data = 1;
+  // Voiceprint data serialized to a string.
+  string data = 1;
 }
 
 // Format of the audio to be sent for recognition.
