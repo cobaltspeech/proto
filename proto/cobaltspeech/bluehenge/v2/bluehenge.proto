@@ -147,6 +147,15 @@ service BluehengeService {
     };
   }
 
+  // Gets a single task identified by id.
+  // The response returns everything you should need to be able to display the Task and it's Steps to the user.
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/gettask"
+      body: "*"
+    };
+  }
+
   // Gets a single tree identified by id.
   // Trees contain instructions followed by questions to help users
   // diagnose problems. The answers at each step point to another
@@ -179,6 +188,16 @@ service BluehengeService {
     };
   }
 
+  // Gets the data contained within a single entity identified by name.
+  // Entities contain information about parts and other question
+  // answering content. See Entity for more details.
+  rpc GetEntity(GetEntityRequest) returns (GetEntityResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/getentity"
+      body: "*"
+    };
+  }
+
   // Gets the data related with an image.
   // The actual image will be served over HTTP.
   rpc GetEntityImageData(GetEntityImageDataRequest) returns (GetEntityImageDataResponse) {
@@ -198,6 +217,14 @@ message VersionResponse {
   string bluehenge = 1;
   // Diatheke Version Response
   cobaltspeech.diatheke.v3.VersionResponse diatheke_version_response = 2;
+  // The date when the source data was last updated.  Source data includes PDFs
+  // and anything else used to populate the knowledge graph.  Updates to this
+  // version imply a new version of knowledge_graph_version.
+  string source_data_version = 3;
+  // The build date of the knowledge graph in use.  The knowledge graph is
+  // generated from the source data, but can be updated or modified multiple
+  // times given the same source data, hence the separate version.
+  string knowledge_graph_version = 4;
 }
 
 // The top-level message sent by the client for the `ListModels` method.
@@ -303,6 +330,18 @@ message GetProcedureRequest {
 message GetProcedureResponse {
   // Individual procedure requested.
   Procedure procedure = 1;
+}
+
+// Input to get a single task by its id.
+message GetTaskRequest {
+  // knowledge graph ID that uniquely identifies a single task
+  string id = 1;
+}
+
+// Returns all data related to a single task.
+message GetTaskResponse {
+  // Individual task requested.
+  Task task = 1;
 }
 
 // Input to get a single tree by its id.
@@ -419,6 +458,8 @@ message StepData {
   // Image of the step
   // A URL or relative path to where the multiple media is stored
   repeated string image = 9;
+  // The parts mentioned in the step
+  repeated string parts = 11;
   // List of notes of the step
   // User defined notes associated with this specific step
   repeated Note notes = 10;
@@ -452,6 +493,14 @@ message TreeNode {
   string instruction_text = 3;
   // List of troubleshooting options at given step
   repeated TroubleOptions options = 4;
+  // Image of the step
+  // A URL or relative path to where the multiple media is stored
+  repeated string image = 5;
+  // The parts mentioned in the step
+  repeated string parts = 6;
+  // List of notes of the step
+  // User defined notes associated with this specific step
+  repeated Note notes = 7;
 }
 
 // User defined notes.
@@ -516,15 +565,39 @@ message Extraction {
   Relation relation = 4;
 }
 
+// Input to get an extraction triple about an entity and relation
+message GetEntityRequest {
+  // Name of entity
+  string name = 1;
+}
+
+// Output of GetExtractionRelationship.
+message GetEntityResponse {
+  // The extraction data object.
+  Entity entity = 1;
+}
+
 // Entities are one of the core information storing blocks in
 // the knowledge graph. They can have images or be part of
-// extractions. E.g, in the example "The sky is blue." both
-// "sky" & "blue" are entities.
+// extractions. This makes them extremely versitile.
+// Entities are used when you want to display information not
+// contained in Procedures or Tree. For example, question/answering
+// content, details about aircraft parts, etc.
 message Entity {
   // Unique ID of the entity in the knowledge graph.
   string id = 1;
-  // The text associated with the entity
+  // The text associated with the entity. These are the names we
+  // use to lookup an entity.
   Mention mentions = 2;
+  // The 'official' name of the entity
+  string name = 3;
+  // (Optional) A human readable description of the entity
+  string description = 4;
+  // (Optional) A human readable description of how to find the entity
+  string location = 5;
+  // (Optional) The page where the information about the entity is found.
+  // Often takes the form: "myDocument.PDF#page=17"
+  string page = 6;
 }
 
 // Relations are the connections between entities. A relation
