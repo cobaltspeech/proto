@@ -1,0 +1,239 @@
+// Copyright (2023--present) Cobalt Speech and Language Inc.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.interact.v4;
+
+import "cobaltspeech/chosun/v2/chosun.proto";
+import "cobaltspeech/transcribe/v5/transcribe.proto";
+import "cobaltspeech/voicegen/v1/voicegen.proto";
+import "google/api/annotations.proto";
+
+// Service that implements the Cobalt Interact Voice User Interface API.
+service InteractService {
+  // Returns version information from the server.
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {get: "/api/interact/v4/version"};
+  }
+
+  // ListModels returns information about the Cobalt Interact models
+  // the server can access.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {get: "/api/interact/v4/listmodels"};
+  }
+
+  // Performs bidirectional streaming spoken dialog system interaction.
+  // Receive output event messages while sending interaction input.
+  //
+  // This method is only available via GRPC and not via HTTP+JSON. However,
+  // a web browser may use websockets to use this service.
+  rpc StreamingInteract(stream StreamingInteractRequest) returns (stream StreamingInteractResponse) {
+    option (google.api.http) = {get: "/api/interact/v4/stream"};
+  }
+}
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
+
+// Lists the version of Cobalt Interact and the engines it uses.
+message VersionResponse {
+  // Version of the server handling these requests.
+  string server = 1;
+
+  // Version of the ASR engine uses by the server.
+  string asr_engine = 2;
+
+  // Version of the NLU engine uses by the server.
+  string nlu_engine = 3;
+
+  // Version of the TTS engine uses by the server.
+  string tts_engine = 4;
+}
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {}
+
+// A list of models available on the Cobalt Interact server.
+message ListModelsResponse {
+  repeated ModelInfo models = 1;
+}
+
+// The top-level messages sent by the client for the `StreamingInteract`
+// method. In this streaming call, multiple `StreamingInteractRequest`
+// messages should be sent. The first message must contain a
+// `InteractionConfig` message only and all subsequent messages must
+// contain `InteractionInputEvent` message only.
+message StreamingInteractRequest {
+  oneof request {
+    InteractionConfig config = 1;
+    InteractionInputEvent input_event = 2;
+  }
+}
+
+// The top-level message sent by the server for the `StreamingInteract`
+// method. In this streaming call, multiple `StreamingInteractResponse`
+// messages contain output event will be returned.
+message StreamingInteractResponse {
+  oneof response {
+    ResponseEvent response_event = 1;
+    ASROutputEvent asr_event = 2;
+    NLUOutputEvent nlu_event = 3;
+  }
+}
+
+// Description of an Interact Model.
+message ModelInfo {
+  // Unique identifier of the model. This identifier is used to choose the
+  // model that should be used for interaction, and is specified in the
+  // `InteractionConfig` message.
+  string id = 1;
+
+  // Model name. This is a concise name describing the model, and may be
+  // presented to the end-user, for example, to help choose which model to
+  // use for their interaction task.
+  string name = 2;
+
+  // Model attributes
+  ModelAttributes attributes = 3;
+}
+
+// Attributes of an Interact Model.
+message ModelAttributes {
+  // Language code of the model.
+  string language = 1;
+
+  // List of the information on ASR model available for this model to use.
+  // This information contains model identifier that is used to choose the
+  // ASR model to use for the interaction, and is specified in the
+  // `InteractionConfig.asr_config` message.
+  cobaltspeech.transcribe.v5.ListModelsResponse supported_asr_models = 2;
+
+  // List of the information on TTS model available for this model to use.
+  // This information contains model identifier that is used to choose the
+  // TTS model to use for the interaction, and is specified in the
+  // `InteractionConfig.tts_config` message.
+  cobaltspeech.voicegen.v1.ListModelsResponse supported_tts_models = 3;
+}
+
+// Configuration for setting up a streaming interact session.
+message InteractionConfig {
+  // Specifies the Cobalt Interact model ID to use for the session.
+  string model_id = 1;
+
+  // Specifies a custom wakeword to use for the session. The
+  // wakeword must be enabled in the Cobalt Interact model for this
+  // to have any effect. It will override the default wakeword
+  // specified in the model.
+  string wakeword = 2;
+
+  // ASR service configuration to use for the session.
+  ASRConfig asr_config = 3;
+
+  // TTS service configuration to use for the session.
+  cobaltspeech.voicegen.v1.SynthesisConfig tts_config = 4;
+}
+
+// ASR service configuration.
+message ASRConfig {
+  // Unique identifier of the model to use, as obtained from a `Model` message.
+  string model_id = 1;
+
+  // Format of the audio to be sent for recognition.
+  //
+  // Depending on how they are configured, server instances of this service may
+  // not support all the formats provided in the API. One format that is
+  // guaranteed to be supported is the RAW format with little-endian 16-bit
+  // signed samples with the sample rate matching that of the model being
+  // requested.
+  oneof audio_format {
+    // Audio is raw data without any headers
+    cobaltspeech.transcribe.v5.AudioFormatRAW audio_format_raw = 2;
+
+    // Audio has a self-describing header. Headers are expected to be sent at
+    // the beginning of the entire audio file/stream, and not in every
+    // `RecognitionAudio` message.
+    //
+    // The default value of this type is AUDIO_FORMAT_HEADERED_UNSPECIFIED. If
+    // this value is used, the server may attempt to detect the format of the
+    // audio. However, it is recommended that the exact format be specified.
+    cobaltspeech.transcribe.v5.AudioFormatHeadered audio_format_headered = 3;
+  }
+
+  // This is an optional field. If the audio has multiple channels, this field
+  // can be configured with the list of channel indices that should be
+  // considered for the recognition task. These channels are 0-indexed.
+  //
+  // Example: `[0]` for a mono file, `[0, 1]` for a stereo file.
+  // Example: `[1]` to only transcribe the second channel of a stereo file.
+  //
+  // If this field is not set, all the channels in the audio will be processed.
+  //
+  // Channels that are present in the audio may be omitted, but it is an error
+  // to include a channel index in this field that is not present in the audio.
+  // Channels may be listed in any order but the same index may not be repeated
+  // in this list.
+  //
+  // BAD: `[0, 2]` for a stereo file; BAD: `[0, 0]` for a mono file.
+  repeated uint32 selected_audio_channels = 4;
+}
+
+// Input event message contains data to be sent to the interact model.
+message InteractionInputEvent {
+  oneof data {
+    InteractionText text = 1;
+    InteractionAudio audio = 2;
+  }
+}
+
+// Text input to be sent to the interact model.
+message InteractionText {
+  string text = 1;
+}
+
+// Audio input to be sent to the interact model. If audio content is empty,
+// the server may choose to interpret it as end of stream and stop accepting
+// any further messages.
+message InteractionAudio {
+  bytes data = 1;
+}
+
+// Output event message triggers when output from ASR service is ready. This
+// contains raw response from speech recognizer. The result in raw response
+// can be either final result or interim partial result depends on
+// `is_partial` field.
+message ASROutputEvent {
+  cobaltspeech.transcribe.v5.StreamingRecognizeResponse raw_response = 1;
+}
+
+// Output event message triggers when output from NLU service is ready. This
+// contains recognized intents and their information. The intents are sorted
+// by confidence.
+message NLUOutputEvent {
+  cobaltspeech.chosun.v2.ParseResponse raw_response = 3;
+}
+
+// Output event message triggers to notify client next action to take. This
+// contains system response to interact with end-user.
+message ResponseEvent {
+  oneof data {
+    InteractionReplyText reply_text = 1;
+    cobaltspeech.voicegen.v1.StreamingSynthesizeRequest reply_audio = 2;
+  }
+}
+
+// Reply text from the interact model.
+message InteractionReplyText {
+  string text = 1;
+}
