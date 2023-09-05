@@ -19,19 +19,16 @@ package cobaltspeech.interact.v3;
 import "cobaltspeech/chosun/v2/chosun.proto";
 import "cobaltspeech/cubic/v5/cubic.proto";
 
-option go_package = ".;diathekepb";
-option java_package = "com.cobaltspeech.diatheke";
-
-// Service that implements the Cobalt Diatheke Dialog Management API.
-service DiathekeService {
+// Service that implements the Cobalt Interact Voice User Interface API.
+service InteractService {
   // Returns version information from the server.
   rpc Version(VersionRequest) returns (VersionResponse) {}
 
-  // ListModels returns information about the Diatheke models
+  // ListModels returns information about the Cobalt Interact models
   // the server can access.
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
-  // Create a new Diatheke session. Also returns a list of
+  // Create a new Cobalt Interact session. Also returns a list of
   // actions to take next.
   rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {}
 
@@ -41,7 +38,7 @@ service DiathekeService {
 
   // Process input for a session and get an updated session with
   // a list of actions to take next. This is the only method
-  // that modifies the Diatheke session state.
+  // that modifies the Cobalt Interact session state.
   rpc UpdateSession(UpdateSessionRequest) returns (UpdateSessionResponse) {}
 
   // Create an ASR stream. A result is returned when the
@@ -51,11 +48,11 @@ service DiathekeService {
   // The ASR result may be used in the UpdateSession method.
   // <br/><br/>
   // If the session has a wakeword enabled, and the client
-  // application is using Diatheke and Cubic to handle the
-  // wakeword processing, this method will not return a
-  // result until the wakeword condition has been satisfied.
-  // Utterances without the required wakeword will be
-  // discarded and no transcription will be returned.
+  // application is using Cobalt Interact and Cobalt Transcribe
+  // to handle the wakeword processing, this method will not
+  // return a result until the wakeword condition has been
+  // satisfied. Utterances without the required wakeword will
+  // be discarded and no transcription will be returned.
   rpc StreamASR(stream StreamASRRequest) returns (StreamASRResponse) {}
 
   // Create a TTS stream to receive audio for the given reply.
@@ -95,7 +92,7 @@ service DiathekeService {
 // The top-level message sent by the client for the `Version` method.
 message VersionRequest {}
 
-// Lists the version of Diatheke and the engines it uses.
+// Lists the version of Cobalt Interact and the engines it uses.
 message VersionResponse {
   // Dialog management engine
   string diatheke = 1;
@@ -113,18 +110,18 @@ message VersionResponse {
 // The top-level message sent by the client for the `ListModels` method.
 message ListModelsRequest {}
 
-// A list of models available on the Diatheke server.
+// A list of models available on the Cobalt Interact server.
 message ListModelsResponse {
   repeated ModelInfo models = 1;
 }
 
 // The top-level message sent by the client for the `CreateSession` method.
 message CreateSessionRequest {
-  // Specifies the Diatheke model ID to use for the session.
+  // Specifies the Cobalt Interact model ID to use for the session.
   string model_id = 1;
 
   // Specifies a custom wakeword to use for this session. The
-  // wakeword must be enabled in the Diatheke model for this
+  // wakeword must be enabled in the Cobalt Interact model for this
   // to have any effect. It will override the default wakeword
   // specified in the model.
   string wakeword = 2;
@@ -165,9 +162,9 @@ message StreamTTSResponse {
   bytes audio = 1;
 }
 
-// Information about a single Diatheke model.
+// Information about a single Cobalt Interact model.
 message ModelInfo {
-  // Diatheke model ID, which is used to create a new session.
+  // Cobalt Interact model ID, which is used to create a new session.
   string id = 1;
 
   // Pretty model name, which may be used for display purposes.
@@ -183,7 +180,7 @@ message ModelInfo {
   uint32 tts_sample_rate = 5;
 }
 
-// Used by Diatheke to update the session state.
+// Used by Cobalt Interact to update the session state.
 message SessionInput {
   // The session token.
   TokenData token = 1;
@@ -203,7 +200,7 @@ message SessionInput {
   }
 }
 
-// A token that represents a single Diatheke session and its
+// A token that represents a single Cobalt Interact session and its
 // current state.
 message TokenData {
   bytes data = 1;
@@ -217,7 +214,7 @@ message TokenData {
   string metadata = 3;
 }
 
-// User supplied text to send to Diatheke for processing.
+// User supplied text to send to Cobalt Interact for processing.
 message TextInput {
   string text = 1;
 }
@@ -227,21 +224,21 @@ message CommandResult {
   // The command ID, as given by the CommandAction
   string id = 1;
 
-  // Output from the command expected by the Diatheke model.
+  // Output from the command expected by the Cobalt Interact model.
   // For example, this could be the result of a data query.
   map<string, string> out_parameters = 2;
 
   // If there was an error during execution, indicate it
   // here with a brief message that will be logged by
-  // Diatheke.
+  // Cobalt Interact.
   string error = 3;
 }
 
-// Changes the current state of a Diatheke session to run at
+// Changes the current state of a Cobalt Interact session to run at
 // the specified story.
 message SetStory {
   // The ID of the story to run, as defined in the
-  // Diatheke model.
+  // Cobalt Interact model.
   string story_id = 1;
 
   // A list of parameters to set before running the given
@@ -263,7 +260,7 @@ message SessionOutput {
 // Specifies an action that the client application should take.
 message ActionData {
   oneof action {
-    // The user must provide input to Diatheke.
+    // The user must provide input to Cobalt Interact.
     WaitForUserAction input = 1;
 
     // The client app must execute the specified command.
@@ -278,13 +275,13 @@ message ActionData {
   }
 }
 
-// This action indicates that Diatheke is expecting user input.
+// This action indicates that Cobalt Interact is expecting user input.
 message WaitForUserAction {
   // True if the next user input must begin with a wake-word.
   bool requires_wake_word = 1;
 
   // True if the input is required immediately (i.e., in
-  // response to a question Diatheke asked the user). When
+  // response to a question Cobalt Interact asked the user). When
   // false, the client should be allowed to wait indefinitely
   // for the user to provide input.
   bool immediate = 2;
@@ -294,7 +291,7 @@ message WaitForUserAction {
 // execute a command.
 message CommandAction {
   // The ID of the command to execute, as defined in the
-  // Diatheke model.
+  // Cobalt Interact model.
   string id = 1;
   map<string, string> input_parameters = 2;
 
@@ -324,7 +321,7 @@ message TranscribeAction {
   // (Required) The ASR model to use for transcription.
   string cubic_model_id = 2;
 
-  // (Optional) A Diatheke model to use for end-of-stream
+  // (Optional) A Cobalt Interact model to use for end-of-stream
   // conditions. If empty, the server will not be able to
   // automatically close the transcribe stream based on
   // conditions defined in the model, such as
@@ -338,9 +335,8 @@ message TranscribeAction {
 // stream must be the session token followed by audio data.
 message StreamASRRequest {
   oneof data {
-    // Session data, used to determine the correct Cubic
-    // model to use for ASR, with other contextual
-    // information.
+    // Session data, used to determine the correct ASR
+    // model to use, with other contextual information.
     TokenData token = 1;
 
     // Audio data to transcribe.
@@ -358,9 +354,8 @@ message StreamASRResponse {
 // message only and all subsequent messages must contain audio data only.
 message StreamASRWithPartialsRequest {
   oneof data {
-    // Session data, used to determine the correct Cubic
-    // model to use for ASR, with other contextual
-    // information.
+    // Session data, used to determine the correct ASR
+    // model to use, with other contextual information.
     TokenData token = 1;
 
     // Audio data to transcribe.
@@ -372,14 +367,14 @@ message StreamASRWithPartialsRequest {
 // method. This streaming call will return multiple `StreamASRWithPartialsResponse`
 // messages. The messages are multiple messages contain partial recognition
 // result from ASR engine and one last message contain an `ASRResult` that be use
-// to update Diatheke session.
+// to update Cobalt Interact session.
 message StreamASRWithPartialsResponse {
   oneof data {
     // An interim partial result, and could change after more audio is processed
-    // and should not be used to update Diatheke session.
+    // and should not be used to update Cobalt Interact session.
     cobaltspeech.cubic.v5.RecognitionResult partial_result = 1;
 
-    // Final result from ASR engine. This can be use to update Diatheke session
+    // Final result from ASR engine. This can be use to update Cobalt Interact session
     // via `UpdateSession` method.
     ASRResult asr_result = 2;
   }
@@ -397,10 +392,10 @@ message ASRResult {
   double confidence = 2;
 
   // True if a timeout was defined for the session's current
-  // input state in the Diatheke model, and the timeout
+  // input state in the Cobalt Interact model, and the timeout
   // expired before getting a transcription. This timeout
   // refers to the amount of time a user has to verbally
-  // respond to Diatheke after the ASR stream has been
+  // respond to Cobalt Interact after the ASR stream has been
   // created, and should not be confused with a network
   // connection timeout.
   bool timed_out = 3;
