@@ -255,12 +255,12 @@ enum AudioCodec {
   AUDIO_CODEC_WAV = 1;
 }
 
-// Audio to be sent to the synthesizer
+// Text input to be sent to the synthesizer
 message SynthesisText {
   string text = 1;
 }
 
-// Audio to be sent to the synthesizer
+// Synthesize audio from the synthesizer
 message SynthesizedAudio {
   bytes data = 1;
 }
