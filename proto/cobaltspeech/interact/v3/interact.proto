@@ -125,6 +125,11 @@ message CreateSessionRequest {
   // to have any effect. It will override the default wakeword
   // specified in the model.
   string wakeword = 2;
+
+  // This is an optional field to provide any metadata associated with the
+  // session. The server may record this metadata when processing the
+  // request. The server does not use this field for any other purpose.
+  SessionMetadata metadata = 3;
 }
 
 // The top-level message sent by the server for the `CreateSession` method.
@@ -440,4 +445,16 @@ message TranscribeResponse {
 
   // Cubic recognition result.
   cobaltspeech.cubic.v5.RecognitionResult cubic_result = 4;
+}
+
+// Metadata associated with the session.
+message SessionMetadata {
+  // Any custom metadata that the client wants to associate with the session.
+  // This could be a simple string (e.g. a tracing ID) or structured data
+  // (e.g. JSON).
+  string custom_metadata = 1;
+
+  // This is an optional field to specify prefix of files that will be
+  // saved for this session.
+  string storage_file_prefix = 2;
 }
