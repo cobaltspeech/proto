@@ -160,7 +160,11 @@ message UpdateSessionResponse {
 
 // The top-level message sent by the client for the `StreamTTS` method.
 message StreamTTSRequest {
+  // Reply action contains reply text and model ID.
   ReplyAction reply_action = 1;
+
+  // Token data to provide session ID and other contextual information.
+  TokenData token = 2;
 }
 
 // The top-level message sent by the server for the `StreamTTS` method.
