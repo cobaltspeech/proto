@@ -214,14 +214,14 @@ message InteractionAudio {
 // can be either final result or interim partial result depends on
 // `is_partial` field.
 message ASROutputEvent {
-  cobaltspeech.transcribe.v5.StreamingRecognizeResponse raw_response = 1;
+  cobaltspeech.transcribe.v5.StreamingRecognizeResponse response = 1;
 }
 
 // Output event message triggers when output from NLU service is ready. This
 // contains recognized intents and their information. The intents are sorted
 // by confidence.
 message NLUOutputEvent {
-  cobaltspeech.chosun.v2.ParseResponse raw_response = 3;
+  cobaltspeech.chosun.v2.ParseResponse response = 3;
 }
 
 // Output event message triggers to notify client next action to take. This
@@ -229,7 +229,7 @@ message NLUOutputEvent {
 message ResponseEvent {
   oneof data {
     InteractionReplyText reply_text = 1;
-    cobaltspeech.voicegen.v1.StreamingSynthesizeRequest reply_audio = 2;
+    cobaltspeech.voicegen.v1.StreamingSynthesizeResponse reply_audio = 2;
   }
 }
 
