@@ -26,10 +26,12 @@ plugins:
     out: gen/go
     opt: paths=source_relative
 
-  - plugin: buf.build/grpc-ecosystem/gateway
+  - plugin: grpc-gateway
     out: gen/go/gw
+    strategy: all
     opt:
       - paths=source_relative
+      - grpc_api_configuration=grpc_gateway_api_config.yaml
       - standalone=true
 
   # Python

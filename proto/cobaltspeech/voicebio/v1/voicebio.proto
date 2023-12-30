@@ -16,19 +16,13 @@ syntax = "proto3";
 
 package cobaltspeech.voicebio.v1;
 
-import "google/api/annotations.proto";
-
 // Service that implements the Cobalt VoiceBio API.
 service VoiceBioService {
   // Returns version information from the server.
-  rpc Version(VersionRequest) returns (VersionResponse) {
-    option (google.api.http) = {get: "/api/v1/version"};
-  }
+  rpc Version(VersionRequest) returns (VersionResponse) {}
 
   // Returns information about the models available on the server.
-  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {get: "/api/v1/listmodels"};
-  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
   // Uses new audio data to perform enrollment of new users, or to update
   // enrollment of existing users. Returns a new or updated voiceprint.
@@ -40,21 +34,15 @@ service VoiceBioService {
   // If this call is used to update an existing user's voiceprint, the old
   // voiceprint can be discarded and only the new one can be stored for that
   // user.
-  rpc StreamingEnroll(stream StreamingEnrollRequest) returns (StreamingEnrollResponse) {
-    option (google.api.http) = {get: "/api/v1/streaming_enroll"};
-  }
+  rpc StreamingEnroll(stream StreamingEnrollRequest) returns (StreamingEnrollResponse) {}
 
   // Compares audio data against the provided voiceprint and verifies whether or
   // not the audio matches against the voiceprint.
-  rpc StreamingVerify(stream StreamingVerifyRequest) returns (StreamingVerifyResponse) {
-    option (google.api.http) = {get: "/api/v1/streaming_verify"};
-  }
+  rpc StreamingVerify(stream StreamingVerifyRequest) returns (StreamingVerifyResponse) {}
 
   // Compares audio data against the provided list of voiceprints and identifies
   // which (or none) of the voiceprints is a match for the given audio.
-  rpc StreamingIdentify(stream StreamingIdentifyRequest) returns (StreamingIdentifyResponse) {
-    option (google.api.http) = {get: "/api/v1/streaming_identify"};
-  }
+  rpc StreamingIdentify(stream StreamingIdentifyRequest) returns (StreamingIdentifyResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.

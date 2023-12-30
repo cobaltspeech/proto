@@ -16,39 +16,27 @@ syntax = "proto3";
 
 package cobaltspeech.cubic;
 
-import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 
 // Service that implements the Cobalt Cubic Speech Recognition API
 service Cubic {
   // Queries the Version of the Server
-  rpc Version(google.protobuf.Empty) returns (VersionResponse) {
-    option (google.api.http) = {get: "/api/version"};
-  }
+  rpc Version(google.protobuf.Empty) returns (VersionResponse) {}
 
   // Retrieves a list of available speech recognition models
-  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {get: "/api/listmodels"};
-  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
   // Performs synchronous speech recognition: receive results after all audio
   // has been sent and processed.  It is expected that this request be typically
   // used for short audio content: less than a minute long.  For longer content,
   // the `StreamingRecognize` method should be preferred.
-  rpc Recognize(RecognizeRequest) returns (RecognitionResponse) {
-    option (google.api.http) = {
-      post: "/api/recognize"
-      body: "*"
-    };
-  }
+  rpc Recognize(RecognizeRequest) returns (RecognitionResponse) {}
 
   // Performs bidirectional streaming speech recognition.  Receive results while
   // sending audio.  This method is only available via GRPC and not via
   // HTTP+JSON. However, a web browser may use websockets to use this service.
-  rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream RecognitionResponse) {
-    option (google.api.http) = {get: "/api/stream"};
-  }
+  rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream RecognitionResponse) {}
 
   // Compiles recognition context information, such as a specialized list of
   // words or phrases, into a compact, efficient form to send with subsequent
@@ -63,12 +51,7 @@ service Cubic {
   // `ListModels` method. Also, the compiled data will be model specific; that
   // is, the data compiled for one model will generally not be usable with a
   // different model.
-  rpc CompileContext(CompileContextRequest) returns (CompileContextResponse) {
-    option (google.api.http) = {
-      post: "/api/compilecontext"
-      body: "*"
-    };
-  }
+  rpc CompileContext(CompileContextRequest) returns (CompileContextResponse) {}
 }
 
 // The top-level message sent by the client for the `ListModels` method.

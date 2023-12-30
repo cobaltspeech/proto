@@ -1,0 +1,92 @@
+# This file maps rpcs to their http annotations for grpc-gateway
+
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+    # bluehenge
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.Version
+      get: /api/bluehenge/v2/version
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListModels
+      get: /api/bluehenge/v2/listmodels
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.CreateSession
+      post: /api/bluehenge/v2/createsession
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.DeleteSession
+      post: /api/bluehenge/v2/deletesession
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.UpdateSession
+      post: /api/bluehenge/v2/updatesession
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListProcedures
+      get: /api/bluehenge/v2/listprocedures
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListTrees
+      get: /api/bluehenge/v2/listtrees
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListEntities
+      get: /api/bluehenge/v2/listentities
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetProcedure
+      post: /api/bluehenge/v2/getprocedure
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetTask
+      post: /api/bluehenge/v2/gettask
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetEntity
+      post: /api/bluehenge/v2/getentity
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.SaveNote
+      post: /api/bluehenge/v2/savenote
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetExtractionRelationship
+      post: /api/bluehenge/v2/getextractionrelationship
+      body: "*"
+    - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetEntityImageData
+      post: /api/bluehenge/v2/getentityimagedata
+      body: "*"
+
+    # privacyscreen
+    - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.Version
+      get: /api/privacyscreen/v1/version
+    - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.ListModels
+      get: /api/privacyscreen/v1/listmodels
+    - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.RedactText
+      post: /api/privacyscreen/v1/redact_text
+      body: "*"
+    - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.RedactTranscript
+      post: /api/privacyscreen/v1/redact_transcript
+      body: "*"
+    - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.StreamingRedactTranscribedAudio
+      get: /api/privacyscreen/v1/redact_transcribed_audio
+    - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.StreamingTranscribeAndRedact
+      get: /api/privacyscreen/v1/transcribe_and_redact
+
+    # transcribe
+    - selector: cobaltspeech.transcribe.v5.TranscribeService.Version
+      get: /api/transcribe/v5/version
+    - selector: cobaltspeech.transcribe.v5.TranscribeService.ListModels
+      get: /api/transcribe/v5/listmodels
+    - selector: cobaltspeech.transcribe.v5.TranscribeService.StreamingRecognize
+      get: /api/transcribe/v5/stream
+    - selector: cobaltspeech.transcribe.v5.TranscribeService.CompileContext
+      post: /api/transcribe/v5/compilecontext
+      body: "*"
+
+    # voicebio
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.Version
+      get: /api/voicebio/v1/version
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.ListModels
+      get: /api/voicebio/v1/listmodels
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingEnroll
+      get: /api/voicebio/v1/streaming_enroll
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingVerify
+      get: /api/voicebio/v1/streaming_verify
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingIdentify
+      get: /api/voicebio/v1/streaming_identify
+
+    # voicegen
+    - selector: cobaltspeech.voicegen.v1.VoiceGenService.Version
+      get: /api/voicegen/v1/version
+    - selector: cobaltspeech.voicegen.v1.VoiceGenService.ListModels
+      get: /api/voicegen/v1/listmodels
+    - selector: cobaltspeech.voicegen.v1.VoiceGenService.StreamingSynthesize
+      get: /api/voicegen/v1/synthesize

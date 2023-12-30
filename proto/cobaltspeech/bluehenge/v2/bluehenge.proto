@@ -15,7 +15,6 @@ syntax = "proto3";
 package cobaltspeech.bluehenge.v2;
 
 import "cobaltspeech/diatheke/v3/diatheke.proto";
-import "google/api/annotations.proto";
 
 // Bluehenge is designed to help with maintainance and repair tasks.
 // When paired with other cobalt offerings, it can provide a hands-free virtual assistant for technicians.
@@ -41,43 +40,24 @@ import "google/api/annotations.proto";
 
 service BluehengeService {
   // Returns version information of the Bluehenge server.
-  rpc Version(VersionRequest) returns (VersionResponse) {
-    option (google.api.http) = {get: "/api/v2/version"};
-  }
+  rpc Version(VersionRequest) returns (VersionResponse) {}
 
   // ListModels returns information about the Bluehenge models
   // the server can access.
-  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {get: "/api/v2/listmodels"};
-  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
   // Create a new Bluehenge session. Also returns a list of
   // actions to take next.
-  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/createsession"
-      body: "*"
-    };
-  }
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {}
 
   // Delete the session. Behavior is undefined if the given
   // TokenData is used again after this function is called.
-  rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/deletesession"
-      body: "*"
-    };
-  }
+  rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse) {}
 
   // Process input for a session and get an updated session with
   // a list of actions to take next. This is the only method
   // that modifies the Bluehenge session state.
-  rpc UpdateSession(UpdateSessionRequest) returns (UpdateSessionResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/updatesession"
-      body: "*"
-    };
-  }
+  rpc UpdateSession(UpdateSessionRequest) returns (UpdateSessionResponse) {}
 
   // Create an ASR stream. A result is returned when the
   // stream is closed by the client (which forces the ASR to
@@ -118,43 +98,30 @@ service BluehengeService {
   // Returns a list of all the procedures.
   // This list is contains a simplified representation of the procedures,
   // which can be helpful for displaying a directory or table of contents.
-  // The full details of an individual procedure can be retrieved via GetProcedure.
-  rpc ListProcedures(ListProceduresRequest) returns (ListProceduresResponse) {
-    option (google.api.http) = {get: "/api/v2/listprocedures"};
-  }
+  // The full details of an individual procedure can be retrieved via
+  // GetProcedure.
+  rpc ListProcedures(ListProceduresRequest) returns (ListProceduresResponse) {}
 
   // Returns a list of all the trees.
   // This list is contains a simplified representation of the trees,
   // which can be helpful for displaying a directory or table of contents.
   // The full details of an individual tree can be retrieved via GetTree.
-  rpc ListTrees(ListTreesRequest) returns (ListTreesResponse) {
-    option (google.api.http) = {get: "/api/v2/listtrees"};
-  }
+  rpc ListTrees(ListTreesRequest) returns (ListTreesResponse) {}
 
   // Returns a list of all entities.
   // This list contains every entity in the knowledge graph and can
   // be used for fuzzy matching or any other time you need everything.
-  rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse) {
-    option (google.api.http) = {get: "/api/v2/listentities"};
-  }
+  rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse) {}
 
   // Gets a single procedure identified by id.
-  // The response returns everything you should need to be able to display the Procedure and it's Steps and Tasks to the user.
-  rpc GetProcedure(GetProcedureRequest) returns (GetProcedureResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/getprocedure"
-      body: "*"
-    };
-  }
+  // The response returns everything you should need to be able to display the
+  // Procedure and it's Steps and Tasks to the user.
+  rpc GetProcedure(GetProcedureRequest) returns (GetProcedureResponse) {}
 
   // Gets a single task identified by id.
-  // The response returns everything you should need to be able to display the Task and it's Steps to the user.
-  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/gettask"
-      body: "*"
-    };
-  }
+  // The response returns everything you should need to be able to display the
+  // Task and it's Steps to the user.
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {}
 
   // Gets a single tree identified by id.
   // Trees contain instructions followed by questions to help users
@@ -162,50 +129,25 @@ service BluehengeService {
   // TreeNode to continue the diagnosis. This response returns an
   // information bearing Tree struct with a list of its TreeNodes in
   // a linear order starting with the first one the user should see.
-  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/gettree"
-      body: "*"
-    };
-  }
+  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {}
 
   // Saves a note in a specific step during a procedure.
-  rpc SaveNote(SaveNoteRequest) returns (SaveNoteResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/savenote",
-      body: "*"
-    };
-  }
+  rpc SaveNote(SaveNoteRequest) returns (SaveNoteResponse) {}
 
   // Gets the data related with an entity extraction triple for a
   // specific entity-relation pair, e.g. entity:"sky", relation:"has color"
   // Extractions contain Subject-Relation-Object sets. For example,
   // entity:"sky", relation:"has color", object:"blue".
-  rpc GetExtractionRelationship(GetExtractionRelationshipRequest) returns (GetExtractionRelationshipResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/getextractionrelationship"
-      body: "*"
-    };
-  }
+  rpc GetExtractionRelationship(GetExtractionRelationshipRequest) returns (GetExtractionRelationshipResponse) {}
 
   // Gets the data contained within a single entity identified by name.
   // Entities contain information about parts and other question
   // answering content. See Entity for more details.
-  rpc GetEntity(GetEntityRequest) returns (GetEntityResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/getentity"
-      body: "*"
-    };
-  }
+  rpc GetEntity(GetEntityRequest) returns (GetEntityResponse) {}
 
   // Gets the data related with an image.
   // The actual image will be served over HTTP.
-  rpc GetEntityImageData(GetEntityImageDataRequest) returns (GetEntityImageDataResponse) {
-    option (google.api.http) = {
-      post: "/api/v2/getentityimage"
-      body: "*"
-    };
-  }
+  rpc GetEntityImageData(GetEntityImageDataRequest) returns (GetEntityImageDataResponse) {}
 }
 
 // Empty request for Bluehenge Version

@@ -19,26 +19,18 @@ syntax = "proto3";
 
 package cobaltspeech.cubic.v5;
 
-import "google/api/annotations.proto";
-
 // Service that implements the Cobalt Cubic Speech Recognition API.
 service CubicService {
   // Queries the version of the server.
-  rpc Version(VersionRequest) returns (VersionResponse) {
-    option (google.api.http) = {get: "/api/v5/version"};
-  }
+  rpc Version(VersionRequest) returns (VersionResponse) {}
 
   // Retrieves a list of available speech recognition models.
-  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {get: "/api/v5/listmodels"};
-  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
 
   // Performs bidirectional streaming speech recognition. Receive results while
   // sending audio. This method is only available via GRPC and not via
   // HTTP+JSON. However, a web browser may use websockets to use this service.
-  rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream StreamingRecognizeResponse) {
-    option (google.api.http) = {get: "/api/v5/stream"};
-  }
+  rpc StreamingRecognize(stream StreamingRecognizeRequest) returns (stream StreamingRecognizeResponse) {}
 
   // Compiles recognition context information, such as a specialized list of
   // words or phrases, into a compact, efficient form to send with subsequent
@@ -52,12 +44,7 @@ service CubicService {
   // `ModelAttributes.ContextInfo` obtained via the `ListModels` method. Also,
   // the compiled data will be model specific; that is, the data compiled for
   // one model will generally not be usable with a different model.
-  rpc CompileContext(CompileContextRequest) returns (CompileContextResponse) {
-    option (google.api.http) = {
-      post: "/api/v5/compilecontext"
-      body: "*"
-    };
-  }
+  rpc CompileContext(CompileContextRequest) returns (CompileContextResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.

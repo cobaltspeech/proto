@@ -16,26 +16,18 @@ syntax = "proto3";
 
 package cobaltspeech.voicegen.v1;
 
-import "google/api/annotations.proto";
-
 // Service that implements the Cobalt VoiceGen API.
 service VoiceGenService {
   // Returns version information from the server.
-  rpc Version(VersionRequest) returns (VersionResponse) {
-    option (google.api.http) = {get: "/api/v1/version"};
-  }
+  rpc Version(VersionRequest) returns (VersionResponse) {}
 
   // ListModels returns information about the models the server can access.
-  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {get: "/api/v1/listmodels"};
-  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
   // Performs text to speech synthesis and stream synthesized audio. This
   // method is only available via GRPC and not via HTTP+JSON. However, a
   // web browser may use websockets to use this service.
-  rpc StreamingSynthesize(StreamingSynthesizeRequest) returns (stream StreamingSynthesizeResponse) {
-    option (google.api.http) = {get: "/api/v1/synthesize"};
-  }
+  rpc StreamingSynthesize(StreamingSynthesizeRequest) returns (stream StreamingSynthesizeResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.

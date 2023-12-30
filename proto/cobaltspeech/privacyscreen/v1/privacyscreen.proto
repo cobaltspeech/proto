@@ -16,50 +16,30 @@ syntax = "proto3";
 
 package cobaltspeech.privacyscreen.v1;
 
-import "google/api/annotations.proto";
-
 // Service that implements the Cobalt Privacy Screen API.
 service PrivacyScreenService {
   // Returns version information from the server.
-  rpc Version(VersionRequest) returns (VersionResponse) {
-    option (google.api.http) = {get: "/api/v1/version"};
-  }
+  rpc Version(VersionRequest) returns (VersionResponse) {}
 
   // ListModels returns information about the models the server can access.
-  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
-    option (google.api.http) = {get: "/api/v1/listmodels"};
-  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
 
   // Redact text using a redaction engine that is configured with the provided
   // redaction configuration.
-  rpc RedactText(RedactTextRequest) returns (RedactTextResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/redact_text"
-      body: "*"
-    };
-  }
+  rpc RedactText(RedactTextRequest) returns (RedactTextResponse) {}
 
   // redacts transcript using a redaction engine that is configured with the
   // provided redaction configuration.
-  rpc RedactTranscript(RedactTranscriptRequest) returns (RedactTranscriptResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/redact_transcript"
-      body: "*"
-    };
-  }
+  rpc RedactTranscript(RedactTranscriptRequest) returns (RedactTranscriptResponse) {}
 
   // Performs bidirectional streaming redaction on transcribed audio. Receive
   // redacted audio while sending audio. The transcription of audio data must be
   // ready before sending the audio.
-  rpc StreamingRedactTranscribedAudio(stream StreamingRedactTranscribedAudioRequest) returns (stream StreamingRedactTranscribedAudioResponse) {
-    option (google.api.http) = {get: "/api/v1/redact_transcribed_audio"};
-  }
+  rpc StreamingRedactTranscribedAudio(stream StreamingRedactTranscribedAudioRequest) returns (stream StreamingRedactTranscribedAudioResponse) {}
 
   // Performs bidirectional streaming speech recognition and redaction. Receive
   // redacted audio and transcriptions while sending audio.
-  rpc StreamingTranscribeAndRedact(stream StreamingTranscribeAndRedactRequest) returns (stream StreamingTranscribeAndRedactResponse) {
-    option (google.api.http) = {get: "/api/v1/transcribed_and_redact"};
-  }
+  rpc StreamingTranscribeAndRedact(stream StreamingTranscribeAndRedactRequest) returns (stream StreamingTranscribeAndRedactResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.
