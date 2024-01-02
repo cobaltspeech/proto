@@ -9,84 +9,84 @@ http:
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.Version
       get: /api/bluehenge/v2/version
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListModels
-      get: /api/bluehenge/v2/listmodels
+      get: /api/bluehenge/v2/list-models
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.CreateSession
-      post: /api/bluehenge/v2/createsession
+      post: /api/bluehenge/v2/create-session
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.DeleteSession
-      post: /api/bluehenge/v2/deletesession
+      post: /api/bluehenge/v2/delete-session
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.UpdateSession
-      post: /api/bluehenge/v2/updatesession
+      post: /api/bluehenge/v2/update-session
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListProcedures
-      get: /api/bluehenge/v2/listprocedures
+      get: /api/bluehenge/v2/list-procedures
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListTrees
-      get: /api/bluehenge/v2/listtrees
+      get: /api/bluehenge/v2/list-trees
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListEntities
-      get: /api/bluehenge/v2/listentities
+      get: /api/bluehenge/v2/list-entities
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetProcedure
-      post: /api/bluehenge/v2/getprocedure
+      post: /api/bluehenge/v2/get-procedure
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetTask
-      post: /api/bluehenge/v2/gettask
+      post: /api/bluehenge/v2/get-task
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetEntity
-      post: /api/bluehenge/v2/getentity
+      post: /api/bluehenge/v2/get-entity
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.SaveNote
-      post: /api/bluehenge/v2/savenote
+      post: /api/bluehenge/v2/save-note
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetExtractionRelationship
-      post: /api/bluehenge/v2/getextractionrelationship
+      post: /api/bluehenge/v2/get-extraction-relationship
       body: "*"
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.GetEntityImageData
-      post: /api/bluehenge/v2/getentityimagedata
+      post: /api/bluehenge/v2/get-entity-image-data
       body: "*"
 
     # privacyscreen
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.Version
       get: /api/privacyscreen/v1/version
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.ListModels
-      get: /api/privacyscreen/v1/listmodels
+      get: /api/privacyscreen/v1/list-models
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.RedactText
-      post: /api/privacyscreen/v1/redact_text
+      post: /api/privacyscreen/v1/redact-text
       body: "*"
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.RedactTranscript
-      post: /api/privacyscreen/v1/redact_transcript
+      post: /api/privacyscreen/v1/redact-transcript
       body: "*"
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.StreamingRedactTranscribedAudio
-      get: /api/privacyscreen/v1/redact_transcribed_audio
+      get: /api/privacyscreen/v1/streaming-redact-transcribed-audio
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.StreamingTranscribeAndRedact
-      get: /api/privacyscreen/v1/transcribe_and_redact
+      get: /api/privacyscreen/v1/streaming-transcribe-and-redact
 
     # transcribe
     - selector: cobaltspeech.transcribe.v5.TranscribeService.Version
       get: /api/transcribe/v5/version
     - selector: cobaltspeech.transcribe.v5.TranscribeService.ListModels
-      get: /api/transcribe/v5/listmodels
+      get: /api/transcribe/v5/list-models
     - selector: cobaltspeech.transcribe.v5.TranscribeService.StreamingRecognize
-      get: /api/transcribe/v5/stream
+      get: /api/transcribe/v5/streaming-recognize
     - selector: cobaltspeech.transcribe.v5.TranscribeService.CompileContext
-      post: /api/transcribe/v5/compilecontext
+      post: /api/transcribe/v5/compile-context
       body: "*"
 
     # voicebio
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.Version
       get: /api/voicebio/v1/version
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.ListModels
-      get: /api/voicebio/v1/listmodels
+      get: /api/voicebio/v1/list-models
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingEnroll
-      get: /api/voicebio/v1/streaming_enroll
+      get: /api/voicebio/v1/streaming-enroll
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingVerify
-      get: /api/voicebio/v1/streaming_verify
+      get: /api/voicebio/v1/streaming-verify
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingIdentify
-      get: /api/voicebio/v1/streaming_identify
+      get: /api/voicebio/v1/streaming-identify
 
     # voicegen
     - selector: cobaltspeech.voicegen.v1.VoiceGenService.Version
       get: /api/voicegen/v1/version
     - selector: cobaltspeech.voicegen.v1.VoiceGenService.ListModels
-      get: /api/voicegen/v1/listmodels
+      get: /api/voicegen/v1/list-models
     - selector: cobaltspeech.voicegen.v1.VoiceGenService.StreamingSynthesize
-      get: /api/voicegen/v1/synthesize
+      get: /api/voicegen/v1/streaming-synthesize
