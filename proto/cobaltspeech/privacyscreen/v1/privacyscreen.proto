@@ -96,11 +96,11 @@ message RedactTranscriptResponse {
   Transcript transcript = 1;
 }
 
-// The top-level messages sent by the client for the `StreamingRedactTranscribedAudio`
-// method. In this streaming call, multiple `StreamingRedactTranscribedAudioRequest`
-// messages should be sent. The first message must contain a
-// `RedactTranscribedAudioConfig` message only and all subsequent messages must
-// contain audio data only.
+// The top-level messages sent by the client for the
+// `StreamingRedactTranscribedAudio` method. In this streaming call, multiple
+// `StreamingRedactTranscribedAudioRequest` messages should be sent. The first
+// message must contain a `RedactTranscribedAudioConfig` message only and all
+// subsequent messages must contain audio data only.
 message StreamingRedactTranscribedAudioRequest {
   oneof request {
     RedactTranscribedAudioConfig config = 1;
@@ -108,9 +108,10 @@ message StreamingRedactTranscribedAudioRequest {
   }
 }
 
-// The top-level message sent by the server for the `StreamingRedactTranscribedAudio`
-// method. In this streaming call, multiple `StreamingRedactTranscribedAudioResponse`
-// messages contain either `Utterance` or redacted audio data will be returned.
+// The top-level message sent by the server for the
+// `StreamingRedactTranscribedAudio` method. In this streaming call, multiple
+// `StreamingRedactTranscribedAudioResponse` messages contain either `Utterance`
+// or redacted audio data will be returned.
 message StreamingRedactTranscribedAudioResponse {
   oneof result {
     Utterance utterance = 1;
@@ -118,10 +119,11 @@ message StreamingRedactTranscribedAudioResponse {
   }
 }
 
-// The top-level messages sent by the client for the `StreamingTranscribeAndRedact`
-// method. In this streaming call, multiple `StreamingTranscribeAndRedactRequest`
-// messages should be sent. The first message must contain a `TranscribeAndRedactConfig`
-// message only and all subsequent messages must contain audio data only.
+// The top-level messages sent by the client for the
+// `StreamingTranscribeAndRedact` method. In this streaming call, multiple
+// `StreamingTranscribeAndRedactRequest` messages should be sent. The first
+// message must contain a `TranscribeAndRedactConfig` message only and all
+// subsequent messages must contain audio data only.
 message StreamingTranscribeAndRedactRequest {
   oneof request {
     TranscribeAndRedactConfig config = 1;
@@ -129,10 +131,10 @@ message StreamingTranscribeAndRedactRequest {
   }
 }
 
-// The top-level message sent by the server for the `StreamingTranscribeAndRedact`
-// method. In this streaming call, multiple `StreamingTranscribeAndRedactResponse`
-// messages contain either `TranscribeAndRedactUtterance` or redacted audio data
-// will be returned.
+// The top-level message sent by the server for the
+// `StreamingTranscribeAndRedact` method. In this streaming call, multiple
+// `StreamingTranscribeAndRedactResponse` messages contain either
+// `TranscribeAndRedactUtterance` or redacted audio data will be returned.
 message StreamingTranscribeAndRedactResponse {
   oneof result {
     TranscribeAndRedactUtterance utterance = 1;
@@ -143,8 +145,8 @@ message StreamingTranscribeAndRedactResponse {
 // Description of a Cobalt Privacy Screen Model
 message ModelInfo {
   // Unique identifier of the model. This identifier is used to choose the model
-  // that should be used for recognition, and is specified in the `RedactionConfig`
-  // message.
+  // that should be used for recognition, and is specified in the
+  // `RedactionConfig` message.
   string id = 1;
 
   // Model name. This is a concise name describing the model, and may be
@@ -161,7 +163,8 @@ message RedactTranscribedAudioConfig {
   // Text redaction config.
   RedactionConfig redaction_config = 1;
 
-  // Transcription of the entire audio. This must be ready before sending the audio.
+  // Transcription of the entire audio. This must be ready before sending the
+  // audio.
   Transcript transcript = 2;
 }
 
@@ -171,26 +174,45 @@ message TranscribeAndRedactConfig {
   RedactionConfig redaction_config = 1;
 
   // This is an optional field. If this is set to `true`, each utterance result
-  // will include unredacted utterance. If set to `false`, no unredacted utterance
-  // will be returned. The default is `false`.
+  // will include unredacted utterance. If set to `false`, no unredacted
+  // utterance will be returned. The default is `false`.
   bool enable_unredacted_transcript = 2;
+}
+
+// CustomClass allows the client to define a new redaction class. Patterns
+// defined here will override default redaction class for matching tokens.
+message CustomClass {
+  // This is name of the new redaction class. For example, this could be
+  // "COMPANY_NAME".
+  string redaction_class = 1;
+
+  // Pattern defines a Python regex expression that would be used to identify
+  // tokens in text that get redacted to this new redaction class. For example,
+  // "COBALT|GOOGLE|MICROSOFT", or more complex patterns such as
+  // "^COMPANY-[\d]{4}$".
+  string pattern = 2;
 }
 
 // Configuration for setting up a redaction engine.
 message RedactionConfig {
-  // Unique identifier of the model to use, as obtained from a `ModelInfo` message.
+  // Unique identifier of the model to use, as obtained from a `ModelInfo`
+  // message.
   string model_id = 1;
 
   // List of whitelisted redaction classes. If the list is empty, server default
   // redaction class list will be considered.
   repeated string redaction_classes = 2;
 
-  // This is an optional field. If this is set to `true`, Cobalt Privacy Screen will
-  // redact entire transcript at once, by doing so, redaction accuracy will increase
-  // at the cost of higher latency. If set to `false`, Cobalt Privacy Screen will
-  // redact one utterance at a time and return the result as soon as possible. The
-  // default is `false`.
+  // This is an optional field. If this is set to `true`, Cobalt Privacy Screen
+  // will redact entire transcript at once, by doing so, redaction accuracy will
+  // increase at the cost of higher latency. If set to `false`, Cobalt Privacy
+  // Screen will redact one utterance at a time and return the result as soon as
+  // possible. The default is `false`.
   bool disable_streaming = 3;
+
+  // This is an optional field. If set, then provided list will be used to
+  // extend the list of redaction classes.
+  repeated CustomClass custom_classes = 4;
 }
 
 // Transcript contains multiple utterance of the audio.
@@ -203,8 +225,9 @@ message TranscribeAndRedactUtterance {
   // Redacted utterance.
   Utterance redacted = 1;
 
-  // Unredacted utterance. This is available only if `enable_unredacted_transcript`
-  // was set to `true` in the `TranscribeAndRedactConfig`.
+  // Unredacted utterance. This is available only if
+  // `enable_unredacted_transcript` was set to `true` in the
+  // `TranscribeAndRedactConfig`.
   Utterance unredacted = 2;
 }
 
@@ -226,8 +249,8 @@ message Utterance {
   // value for pretranscribed input.
   double asr_confidence = 5;
 
-  // Words corresponding to the utterance. This field contains word-level timestamps,
-  // which are essential input for audio redaction.
+  // Words corresponding to the utterance. This field contains word-level
+  // timestamps, which are essential input for audio redaction.
   repeated Word words = 7;
 }
 
