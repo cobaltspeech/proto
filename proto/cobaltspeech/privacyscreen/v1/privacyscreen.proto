@@ -176,6 +176,15 @@ message TranscribeAndRedactConfig {
   bool enable_unredacted_transcript = 2;
 }
 
+message BlockListItem {
+  string redaction_class = 1;
+  repeated string words_list = 2;
+}
+
+message WordsList {
+  repeated string words_list = 1;
+}
+
 // Configuration for setting up a redaction engine.
 message RedactionConfig {
   // Unique identifier of the model to use, as obtained from a `ModelInfo` message.
@@ -191,6 +200,10 @@ message RedactionConfig {
   // redact one utterance at a time and return the result as soon as possible. The
   // default is `false`.
   bool disable_streaming = 3;
+
+  // This is an optional field. If set, the client is giving specific words that want
+  // to be redacted not contained in redaction_classes.
+  repeated BlockListItem block_list = 4;
 }
 
 // Transcript contains multiple utterance of the audio.
