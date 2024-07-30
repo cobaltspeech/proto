@@ -58,11 +58,16 @@ service DiathekeService {
   // discarded and no transcription will be returned.
   rpc StreamASR(stream StreamASRRequest) returns (StreamASRResponse) {}
 
-  // Create a TTS stream to receive audio for the given reply.
-  // The stream will close when TTS is finished. The client
-  // may also close the stream early to cancel the speech
-  // synthesis.
-  rpc StreamTTS(StreamTTSRequest) returns (stream StreamTTSResponse) {}
+  // Performs bidirectional streaming speech recognition. Receive results while
+  // sending audio. Each result will either be a partial ASR result, or a final
+  // result. Partial results will be sent as soon as they are ready, and all
+  // results will be sent, regardless of any wakeword configuration in the
+  // session. A final result will be sent exactly once, and the stream will be
+  // closed then. If a session has a wakeword enabled, the final result will
+  // only be emitted if the required wakeword is present. The ASRResult in the
+  // final message maybe used in the UpdateSession method for further dialog
+  // processing.
+  rpc StreamASRWithPartials(stream StreamASRWithPartialsRequest) returns (stream StreamASRWithPartialsResponse) {}
 
   // Create an ASR stream for transcription. Unlike StreamASR,
   // Transcribe does not listen for a wakeword. This method
@@ -80,16 +85,11 @@ service DiathekeService {
   // occurs, or the end-transcription intent is recognized.
   rpc Transcribe(stream TranscribeRequest) returns (stream TranscribeResponse) {}
 
-  // Performs bidirectional streaming speech recognition. Receive results while
-  // sending audio. Each result will either be a partial ASR result, or a final
-  // result. Partial results will be sent as soon as they are ready, and all
-  // results will be sent, regardless of any wakeword configuration in the
-  // session. A final result will be sent exactly once, and the stream will be
-  // closed then. If a session has a wakeword enabled, the final result will
-  // only be emitted if the required wakeword is present. The ASRResult in the
-  // final message maybe used in the UpdateSession method for further dialog
-  // processing.
-  rpc StreamASRWithPartials(stream StreamASRWithPartialsRequest) returns (stream StreamASRWithPartialsResponse) {}
+  // Create a TTS stream to receive audio for the given reply.
+  // The stream will close when TTS is finished. The client
+  // may also close the stream early to cancel the speech
+  // synthesis.
+  rpc StreamTTS(StreamTTSRequest) returns (stream StreamTTSResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.
@@ -378,10 +378,10 @@ message StreamASRWithPartialsRequest {
 }
 
 // The top-level messages sent by the server for the `StreamASRWithPartials`
-// method. This streaming call will return multiple `StreamASRWithPartialsResponse`
-// messages. The messages are multiple messages contain partial recognition
-// result from ASR engine and one last message contain an `ASRResult` that be use
-// to update Diatheke session.
+// method. This streaming call will return multiple
+// `StreamASRWithPartialsResponse` messages. The messages are multiple messages
+// contain partial recognition result from ASR engine and one last message
+// contain an `ASRResult` that be use to update Diatheke session.
 message StreamASRWithPartialsResponse {
   oneof data {
     // An interim partial result, and could change after more audio is processed
