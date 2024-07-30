@@ -386,6 +386,12 @@ message StreamASRWithPartialsResponse {
     // Final result from ASR engine. This can be use to update Cobalt Interact
     // session via `UpdateSession` method.
     ASRResult asr_result = 2;
+
+    // Result of a detected wakeword. This field is only available if alert
+    // words are configured on the server, and if the current context requires
+    // the presence of a wakeword. If this field is available, it is sent before
+    // the final `asr_result` is sent.
+    WakewordResult wakeword_result = 3;
   }
 }
 
@@ -411,6 +417,13 @@ message ASRResult {
 
   // Cubic recognition result.
   cobaltspeech.cubic.v5.RecognitionResult cubic_result = 4;
+}
+
+// The result from the ASR stream, sent when a wakeword has been detected in the
+// stream.
+message WakewordResult {
+  // The end-timestamp of the detected wakeword in milliseconds
+  uint64 timestamp_ms = 1;
 }
 
 // Data to send to the Transcribe stream. The first message on
