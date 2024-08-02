@@ -36,5 +36,16 @@ git push origin master
 popd
 rm -rf py-genproto
 
+# publish the openapi v2 docs
+git clone git@github.com:cobaltspeech/openapi-genproto
+rm -rf openapi-genproto/cobaltspeech
+mv gen/openapi-docs/cobaltspeech openapi-genproto/
+pushd openapi-genproto
+git add .
+git diff --quiet HEAD || git commit -am "auto-update: proto=$protorev"
+git push origin master
+popd
+rm -rf openapi-genproto
+
 # cleanup generated code
 rm -rf gen
