@@ -14,10 +14,15 @@ plugins:
     opt:
       - ./doc-templates/grpc-md.tmpl,api.md,source_relative
 
-  - plugin: buf.build/grpc-ecosystem/openapiv2
-    out: gen/docs
+  # OpenAPI v2 definition for HTTP documentation/bindings/code-generation.
+  - plugin: openapiv2 # installed via the `grpc-gateway` nix package
+    # Note: the plugin buf.build/grpc-ecosystem/openapiv2 does not allow external config files.
+    # i.e. using `opt: -grpc_api_configuration=./grpc_gateway_api_config.yaml` so we do it locally.
+    out: gen/openapi-docs
+    opt:
+      - grpc_api_configuration=./grpc_gateway_api_config.yaml
 
-  #Golang
+  # Golang
   - plugin: buf.build/grpc/go
     out: gen/go
     opt: paths=source_relative

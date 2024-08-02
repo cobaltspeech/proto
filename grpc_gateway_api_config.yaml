@@ -5,7 +5,7 @@ config_version: 3
 
 http:
   rules:
-    # bluehenge
+    # Bluehenge - v2
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.Version
       get: /api/bluehenge/v2/version
     - selector: cobaltspeech.bluehenge.v2.BluehengeService.ListModels
@@ -44,7 +44,97 @@ http:
       post: /api/bluehenge/v2/get-entity-image-data
       body: "*"
 
-    # privacyscreen
+    # Chosun - v2
+    - selector: cobaltspeech.chosun.v2.ChosunService.Version
+      get: /api/chosun/v2/version
+    - selector: cobaltspeech.chosun.v2.ChosunService.ListModels
+      get: /api/chosun/v2/list-models
+    - selector: cobaltspeech.chosun.v2.ChosunService.Parse
+      post: /api/chosun/v2/parse
+      body: "*"
+
+    # Cubic - v1
+    - selector: cobaltspeech.cubic.Cubic.Version
+      get: /api/cubic/v1/version
+    - selector: cobaltspeech.cubic.Cubic.ListModels
+      get: /api/cubic/v1/list-models
+    - selector: cobaltspeech.cubic.Cubic.Recognize
+      post: /api/cubic/v1/recognize
+      body: "*"
+    - selector: cobaltspeech.cubic.Cubic.StreamingRecognize
+      post: /api/cubic/v1/streaming-recognize
+      body: "*"
+    - selector: cobaltspeech.cubic.Cubic.CompileContext
+      post: /api/cubic/v1/compile-context
+      body: "*"
+
+    # Cubic - v5
+    - selector: cobaltspeech.cubic.v5.CubicService.Version
+      get: /api/cubic/v5/version
+    - selector: cobaltspeech.cubic.v5.CubicService.ListModels
+      get: /api/cubic/v5/list-models
+    - selector: cobaltspeech.cubic.v5.CubicService.StreamingRecognize
+      post: /api/cubic/v5/streaming-recognize
+      body: "*"
+    - selector: cobaltspeech.cubic.v5.CubicService.CompileContext
+      post: /api/cubic/v5/compile-context
+      body: "*"
+
+    # Diatheke - v3
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.Version
+      get: /api/diatheke/v3/version
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.ListModels
+      get: /api/diatheke/v3/list-models
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.CreateSession
+      post: /api/diatheke/v3/create-session
+      body: "*"
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.DeleteSession
+      post: /api/diatheke/v3/delete-session
+      body: "*"
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.UpdateSession
+      post: /api/diatheke/v3/update-session
+      body: "*"
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.StreamASR
+      post: /api/diatheke/v3/stream-asr
+      body: "*"
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.StreamASRWithPartials
+      post: /api/diatheke/v3/stream-asr-with-partials
+      body: "*"
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.Transcribe
+      post: /api/diatheke/v3/transcribe
+      body: "*"
+    - selector: cobaltspeech.diatheke.v3.DiathekeService.StreamTTS
+      post: /api/diatheke/v3/stream-tts
+      body: "*"
+
+    # Interact - v3
+    - selector: cobaltspeech.interact.v3.InteractService.Version
+      get: /api/diatheke/v3/version
+    - selector: cobaltspeech.interact.v3.InteractService.ListModels
+      get: /api/diatheke/v3/list-models
+    - selector: cobaltspeech.interact.v3.InteractService.CreateSession
+      post: /api/diatheke/v3/create-session
+      body: "*"
+    - selector: cobaltspeech.interact.v3.InteractService.DeleteSession
+      post: /api/diatheke/v3/delete-session
+      body: "*"
+    - selector: cobaltspeech.interact.v3.InteractService.UpdateSession
+      post: /api/diatheke/v3/update-session
+      body: "*"
+    - selector: cobaltspeech.interact.v3.InteractService.StreamASR
+      post: /api/diatheke/v3/stream-asr
+      body: "*"
+    - selector: cobaltspeech.interact.v3.InteractService.StreamASRWithPartials
+      post: /api/diatheke/v3/stream-asr-with-partials
+      body: "*"
+    - selector: cobaltspeech.interact.v3.InteractService.Transcribe
+      post: /api/diatheke/v3/transcribe
+      body: "*"
+    - selector: cobaltspeech.interact.v3.InteractService.StreamTTS
+      post: /api/diatheke/v3/stream-tts
+      body: "*"
+
+    # Privacyscreen - v1
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.Version
       get: /api/privacyscreen/v1/version
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.ListModels
@@ -60,7 +150,7 @@ http:
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.StreamingTranscribeAndRedact
       get: /api/privacyscreen/v1/streaming-transcribe-and-redact
 
-    # transcribe
+    # Transcribe - v5
     - selector: cobaltspeech.transcribe.v5.TranscribeService.Version
       get: /api/transcribe/v5/version
     - selector: cobaltspeech.transcribe.v5.TranscribeService.ListModels
@@ -71,7 +161,7 @@ http:
       post: /api/transcribe/v5/compile-context
       body: "*"
 
-    # voicebio
+    # Voicebio - v1
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.Version
       get: /api/voicebio/v1/version
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.ListModels
@@ -83,7 +173,7 @@ http:
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingIdentify
       get: /api/voicebio/v1/streaming-identify
 
-    # voicegen
+    # Voicegen - v1
     - selector: cobaltspeech.voicegen.v1.VoiceGenService.Version
       get: /api/voicegen/v1/version
     - selector: cobaltspeech.voicegen.v1.VoiceGenService.ListModels
