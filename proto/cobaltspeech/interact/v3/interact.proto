@@ -130,6 +130,18 @@ message CreateSessionRequest {
   // session. The server may record this metadata when processing the
   // request. The server does not use this field for any other purpose.
   SessionMetadata metadata = 3;
+
+  // Format of the audio system expects to recieve. This is an optional
+  // field, and if no value is specified, input will be assumed to be raw
+  // bytes (PCM16SLE) at the sample rate that speech processing models
+  // are configured to use on the server.
+  AudioFormat input_audio_format = 4;
+
+  // Format of the audio client expects to recieve. This is an optional
+  // field. If no value is specified, the output will be produced with a
+  // native audio format that text-to-speech models are configured on
+  // the server.
+  AudioFormat output_audio_format = 5;
 }
 
 // The top-level message sent by the server for the `CreateSession` method.
@@ -474,4 +486,81 @@ message SessionMetadata {
   // This is an optional field to specify prefix of files that will be
   // saved for this session.
   string storage_file_prefix = 2;
+}
+
+// Details of audio in format
+message AudioFormat {
+  // Sampling rate in Hz.
+  uint32 sample_rate = 1;
+
+  // Number of channels present in the audio. E.g.: 1 (mono), 2 (stereo), etc.
+  uint32 channels = 2;
+
+  // Bit depth of each sample (e.g. 8, 16, 24, 32, etc.).
+  uint32 bit_depth = 3;
+
+  // Codec of the samples.
+  AudioCodec codec = 4;
+
+  // Encoding of the samples.
+  AudioEncoding encoding = 5;
+
+  // Byte order of the samples. This field must be set to a value other than
+  // `BYTE_ORDER_UNSPECIFIED` when the `bit_depth` is greater than 8.
+  ByteOrder byte_order = 6;
+}
+
+// Byte order of multi-byte data
+enum ByteOrder {
+  // BYTE_ORDER_UNSPECIFIED is the default value of this type.
+  BYTE_ORDER_UNSPECIFIED = 0;
+
+  // Little Endian byte order
+  BYTE_ORDER_LITTLE_ENDIAN = 1;
+
+  // Big Endian byte order
+  BYTE_ORDER_BIG_ENDIAN = 2;
+}
+
+// The encoding of the audio data to be sent for synthesis.
+enum AudioEncoding {
+  // AUDIO_ENCODING_UNSPECIFIED is the default value of this type and will
+  // result in an error.
+  AUDIO_ENCODING_UNSPECIFIED = 0;
+
+  // PCM signed-integer
+  AUDIO_ENCODING_SIGNED = 1;
+
+  // PCM unsigned-integer
+  AUDIO_ENCODING_UNSIGNED = 2;
+
+  // PCM IEEE-Float
+  AUDIO_ENCODING_IEEE_FLOAT = 3;
+
+  // G.711 mu-law
+  AUDIO_ENCODING_ULAW = 4;
+
+  // G.711 a-law
+  AUDIO_ENCODING_ALAW = 5;
+}
+
+// The encoding of the audio data to be sent for synthesis.
+enum AudioCodec {
+  // AUDIO_CODEC_UNSPECIFIED is the default value of this type.
+  AUDIO_CODEC_UNSPECIFIED = 0;
+
+  // Raw data without any headers
+  AUDIO_CODEC_RAW = 1;
+
+  // WAV with RIFF headers
+  AUDIO_CODEC_WAV = 2;
+
+  // MP3 format with a valid frame header at the beginning of data
+  AUDIO_CODEC_MP3 = 3;
+
+  // FLAC format
+  AUDIO_CODEC_FLAC = 4;
+
+  // Opus format with OGG header
+  AUDIO_CODEC_OGG_OPUS = 5;
 }
