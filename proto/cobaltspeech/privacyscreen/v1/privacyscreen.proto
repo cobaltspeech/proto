@@ -213,6 +213,11 @@ message RedactionConfig {
   // This is an optional field. If set, then provided list will be used to
   // extend the list of redaction classes.
   repeated CustomClass custom_classes = 4;
+
+  // List of disabled redaction classes. When this list is provided,
+  // the default redaction list will be used as default and remove
+  // the disabled classes from this list
+  repeated string disabled_classes = 5;
 }
 
 // Transcript contains multiple utterance of the audio.
