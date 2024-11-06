@@ -214,6 +214,9 @@ message RedactionConfig {
   // extend the list of redaction classes.
   repeated CustomClass custom_classes = 4;
 
+  // This is an optional field. If set, then text matching against the provided list of custom classes will not be redacted.
+  repeated CustomClass custom_unredacted_classes = 6;
+
   // List of disabled redaction classes. When this list is provided,
   // the default redaction list will be used as default and remove
   // the disabled classes from this list
