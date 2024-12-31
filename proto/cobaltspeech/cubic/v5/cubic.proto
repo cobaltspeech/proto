@@ -304,6 +304,11 @@ message RecognitionMetadata {
   // This could be a simple string (e.g. a tracing ID) or structured data
   // (e.g. JSON).
   string custom_metadata = 1;
+
+  // This is an optional field to specify custom ID to identify the recognition
+  // session. It is preferred that this should be a simple string, and not
+  // structured data.
+  string custom_id = 2;
 }
 
 // A collection of additional context information that may aid speech
