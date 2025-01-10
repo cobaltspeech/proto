@@ -95,17 +95,13 @@ http:
       post: /api/diatheke/v3/update-session
       body: "*"
     - selector: cobaltspeech.diatheke.v3.DiathekeService.StreamASR
-      post: /api/diatheke/v3/stream-asr
-      body: "*"
+      get: /api/diatheke/v3/stream-asr
     - selector: cobaltspeech.diatheke.v3.DiathekeService.StreamASRWithPartials
-      post: /api/diatheke/v3/stream-asr-with-partials
-      body: "*"
+      get: /api/diatheke/v3/stream-asr-with-partials
     - selector: cobaltspeech.diatheke.v3.DiathekeService.Transcribe
-      post: /api/diatheke/v3/transcribe
-      body: "*"
+      get: /api/diatheke/v3/transcribe
     - selector: cobaltspeech.diatheke.v3.DiathekeService.StreamTTS
-      post: /api/diatheke/v3/stream-tts
-      body: "*"
+      get: /api/diatheke/v3/stream-tts
 
     # Interact - v3
     - selector: cobaltspeech.interact.v3.InteractService.Version
