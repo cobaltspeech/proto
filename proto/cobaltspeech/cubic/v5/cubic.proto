@@ -306,9 +306,8 @@ message RecognitionMetadata {
   string custom_metadata = 1;
 
   // This is an optional field to specify custom ID to identify the recognition
-  // session. This ID maybe recorded by the server in logs or other storage,
-  // and should therefore not include any sensitive information. The ID should
-  // be a simple string, limited in length to 64 bytes.
+  // session. The custom ID must be a string of upto 64 bytes, and only alphabets,
+  // digits, hyphens and underscores are allowed.
   string custom_id = 2;
 }
 
