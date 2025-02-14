@@ -18,6 +18,7 @@ package cobaltspeech.diatheke.v3;
 
 import "cobaltspeech/chosun/v2/chosun.proto";
 import "cobaltspeech/cubic/v5/cubic.proto";
+import "cobaltspeech/voicegen/v1/voicegen.proto";
 
 option go_package = ".;diathekepb";
 option java_package = "com.cobaltspeech.diatheke";
@@ -116,6 +117,7 @@ message ListModelsRequest {}
 // A list of models available on the Diatheke server.
 message ListModelsResponse {
   repeated ModelInfo models = 1;
+  repeated cobaltspeech.voicegen.v1.SpeakerInfo speakers = 2;
 }
 
 // The top-level message sent by the client for the `CreateSession` method.
@@ -177,6 +179,8 @@ message StreamTTSRequest {
 
   // Token data to provide session ID and other contextual information.
   TokenData token = 2;
+
+  cobaltspeech.voicegen.v1.SynthesisConfig voicegen_synthesis_config = 3;
 }
 
 // The top-level message sent by the server for the `StreamTTS` method.
