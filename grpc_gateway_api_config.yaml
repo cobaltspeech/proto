@@ -105,30 +105,26 @@ http:
 
     # Interact - v3
     - selector: cobaltspeech.interact.v3.InteractService.Version
-      get: /api/diatheke/v3/version
+      get: /api/interact/v3/version
     - selector: cobaltspeech.interact.v3.InteractService.ListModels
-      get: /api/diatheke/v3/list-models
+      get: /api/interact/v3/list-models
     - selector: cobaltspeech.interact.v3.InteractService.CreateSession
-      post: /api/diatheke/v3/create-session
+      post: /api/interact/v3/create-session
       body: "*"
     - selector: cobaltspeech.interact.v3.InteractService.DeleteSession
-      post: /api/diatheke/v3/delete-session
+      post: /api/interact/v3/delete-session
       body: "*"
     - selector: cobaltspeech.interact.v3.InteractService.UpdateSession
-      post: /api/diatheke/v3/update-session
+      post: /api/interact/v3/update-session
       body: "*"
     - selector: cobaltspeech.interact.v3.InteractService.StreamASR
-      post: /api/diatheke/v3/stream-asr
-      body: "*"
+      get: /api/interact/v3/stream-asr
     - selector: cobaltspeech.interact.v3.InteractService.StreamASRWithPartials
-      post: /api/diatheke/v3/stream-asr-with-partials
-      body: "*"
+      get: /api/interact/v3/stream-asr-with-partials
     - selector: cobaltspeech.interact.v3.InteractService.Transcribe
-      post: /api/diatheke/v3/transcribe
-      body: "*"
+      get: /api/interact/v3/transcribe
     - selector: cobaltspeech.interact.v3.InteractService.StreamTTS
-      post: /api/diatheke/v3/stream-tts
-      body: "*"
+      get: /api/interact/v3/stream-tts
 
     # Privacyscreen - v1
     - selector: cobaltspeech.privacyscreen.v1.PrivacyScreenService.Version
