@@ -18,6 +18,7 @@ package cobaltspeech.interact.v3;
 
 import "cobaltspeech/chosun/v2/chosun.proto";
 import "cobaltspeech/cubic/v5/cubic.proto";
+import "cobaltspeech/voicegen/v1/voicegen.proto";
 
 // Service that implements the Cobalt Interact Voice User Interface API.
 service InteractService {
@@ -174,6 +175,8 @@ message StreamTTSRequest {
 
   // Token data to provide session ID and other contextual information.
   TokenData token = 2;
+
+  cobaltspeech.voicegen.v1.SynthesisConfig synthesis_config = 3;
 }
 
 // The top-level message sent by the server for the `StreamTTS` method.
@@ -199,6 +202,8 @@ message ModelInfo {
 
   // The TTS audio sample rate, if TTS is enabled.
   uint32 tts_sample_rate = 5;
+
+  repeated cobaltspeech.voicegen.v1.ModelAttributes tts_model_attributes = 6;
 }
 
 // Used by Cobalt Interact to update the session state.
