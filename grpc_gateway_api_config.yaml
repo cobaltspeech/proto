@@ -164,6 +164,12 @@ http:
       get: /api/voicebio/v1/streaming-verify
     - selector: cobaltspeech.voicebio.v1.VoiceBioService.StreamingIdentify
       get: /api/voicebio/v1/streaming-identify
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.VectorizeVoiceprints
+      post: /api/voicebio/v1/vectorize-voiceprints
+      body: "*"
+    - selector: cobaltspeech.voicebio.v1.VoiceBioService.CompareVoiceprints
+      post: /api/voicebio/v1/compare-voiceprints
+      body: "*"
 
     # Voicegen - v1
     - selector: cobaltspeech.voicegen.v1.VoiceGenService.Version
