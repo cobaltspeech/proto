@@ -42,7 +42,30 @@ service VoiceBioService {
 
   // Compares audio data against the provided list of voiceprints and identifies
   // which (or none) of the voiceprints is a match for the given audio.
+  //
+  // If you have a large list of voiceprints that you want to compare against in
+  // batches, and you want to avoid sending audio data for each comparison, you
+  // can use the `CompareVoiceprints` method instead, which operates on
+  // pre-extracted voiceprints without requiring any audio data. You would first
+  // need to extract the voiceprint from the audio using the `StreamingEnroll`
+  // method, and then use that voiceprint in the `CompareVoiceprints` method as
+  // the target voiceprint.
   rpc StreamingIdentify(stream StreamingIdentifyRequest) returns (StreamingIdentifyResponse) {}
+
+  // Converts the given voiceprints into numerical vector representations that
+  // can be used for various downstream tasks such as clustering, visualization,
+  // or as input features for other machine learning models. The specific format
+  // and dimensionality of these vectors may vary depending on the model used.
+  rpc VectorizeVoiceprints(VectorizeVoiceprintsRequest) returns (VectorizeVoiceprintsResponse) {}
+
+  // Compares pre-extracted voiceprints and returns similarity scores and match
+  // results without needing to send audio data. This is useful in cases where
+  // the user wants to compare a given voiceprint against a large number of
+  // other voiceprints, and sending audio data for each comparison would be
+  // inefficient. The client can enroll the voiceprint once using the
+  // `StreamingEnroll` method, and then use this method to compare it against a
+  // large number of other voiceprints in batches.
+  rpc CompareVoiceprints(CompareVoiceprintsRequest) returns (CompareVoiceprintsResponse) {}
 }
 
 // The top-level message sent by the client for the `Version` method.
@@ -199,10 +222,76 @@ message IdentificationConfig {
   repeated Voiceprint voiceprints = 3;
 }
 
+// The top level message sent by the client for the `VectorizeVoiceprints` method.
+message VectorizeVoiceprintsRequest {
+  // ID of the model to use for vectorization. The model used for vectorization must
+  // match with the model used for enrollment of the voiceprints. A list of
+  // supported IDs can be found using the `ListModels` call.
+  string model_id = 1;
+
+  // Voiceprints to be vectorized.
+  repeated Voiceprint voiceprints = 2;
+}
+
+// The message returned by the server for the `VectorizeVoiceprints` method.
+message VectorizeVoiceprintsResponse {
+  // Voiceprint data converted into a vector representation, which can be used
+  // for various downstream tasks such as clustering, visualization, or as input
+  // features for other machine learning models. The specific format and
+  // dimensionality of these vectors may vary depending on the model used.
+  //
+  // The order of this list is the same as the input voiceprint list provided in
+  // the `VectorizeVoiceprintsRequest` message.
+  repeated VectorVoiceprint voiceprints = 1;
+}
+
+// The top level message sent by the client for the `CompareVoiceprints` method.
+// This is similar to StreamingIdentifyRequest, but operates on pre-extracted
+// voiceprints without sending any audio data.
+message CompareVoiceprintsRequest {
+  // ID of the model to use for comparison. The model used for comparison must
+  // match with the model used for enrollment of the voiceprints. A list of
+  // supported IDs can be found using the `ListModels` call.
+  string model_id = 1;
+
+  // The voiceprint to compare against the reference voiceprints.
+  Voiceprint target_voiceprint = 2;
+
+  // Voiceprints that should be compared against the target voiceprint.
+  repeated Voiceprint reference_voiceprints = 3;
+}
+
+// The message returned by the server for the `CompareVoiceprints` method. This
+// contains the similarity scores and match results for comparing the target
+// voiceprint against each of the reference voiceprints, as well as the index of
+// the best matching voiceprint in the reference list, if any of them is a
+// match. This is similar to StreamingIdentifyResponse, but operates on
+// pre-extracted voiceprints without sending any audio data.
+message CompareVoiceprintsResponse {
+  // Index (0-based) of the best matching voiceprint in the list of reference
+  // voiceprints provided in the `CompareVoiceprintsRequest` message. If none of
+  // the voiceprints was a match, a negative value is returned.
+  int32 best_match_index = 1;
+
+  // Result of comparing the given the target voiceprint against each of the
+  // reference voiceprints. The order of this list is the same as the reference
+  // voiceprint list provided in the `CompareVoiceprintsRequest` message.
+  repeated VoiceprintComparisonResult voiceprint_comparison_results = 2;
+}
+
 // Voiceprint extracted from user's audio.
 message Voiceprint {
   // Voiceprint data serialized to a string.
   string data = 1;
+}
+
+// Voiceprint represented in vector form. The specific format and dimensionality
+// of this vector may vary depending on the model used. The `VectorizeVoiceprints`
+// method can be used to convert a `Voiceprint` into a `VectorVoiceprint`
+// representation.
+message VectorVoiceprint {
+  // List of floating point values representing the voiceprint in vector form.
+  repeated float data = 1;
 }
 
 // Format of the audio to be sent for recognition.
