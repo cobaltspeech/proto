@@ -334,6 +334,10 @@ message ReplyAction {
 
   // TTS model to use with the TTSReply method
   string luna_model = 2;
+
+  // ID of the reply (or slot prompt) definition in the Diatheke model that
+  // produced this text.
+  string reply_id = 3;
 }
 
 // This action indicates that the client application should
