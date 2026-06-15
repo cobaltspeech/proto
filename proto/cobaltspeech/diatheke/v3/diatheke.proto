@@ -448,8 +448,19 @@ message ASRResult {
 // The result from the ASR stream, sent when a wakeword has been detected in the
 // stream.
 message WakewordResult {
-  // The end-timestamp of the detected wakeword in milliseconds
+  // The end-timestamp of the detected wakeword in milliseconds.
   uint64 timestamp_ms = 1;
+
+  // Confidence of the detected wakeword.
+  double confidence = 2;
+
+  // True if the wakeword was accepted.
+  bool is_accepted = 3;
+
+  // Metadata associated with this wakeword result, in JSON format. The contents
+  // are opaque to the API and may include system-specific information such as the
+  // location of stored audio.
+  string metadata = 4;
 }
 
 // Data to send to the Transcribe stream. The first message on
