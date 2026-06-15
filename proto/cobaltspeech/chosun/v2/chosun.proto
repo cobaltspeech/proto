@@ -101,6 +101,12 @@ message ParseRequest {
   // List of whitelisted intents. If the list is empty, all intents will be
   // considered.
   repeated string intent_whitelist = 8;
+
+  // Entities the caller expects for this query (for example, the slot being
+  // filled during slot filling). A slot-fill-aware extractor uses this to tag
+  // a bare answer as the expected slot. If the list is empty, no expectation
+  // is supplied.
+  repeated string expected_entities = 9;
 }
 
 message NBest {
