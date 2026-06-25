@@ -104,7 +104,8 @@ message ParseRequest {
 
   // Entities the caller expects for this query (for example, the slot being
   // filled during slot filling). A slot-fill-aware extractor uses this to tag
-  // a bare answer as the expected slot. If the list is empty, no expectation
+  // a bare answer as the expected slot. These are entity *names*, not values,
+  // and their order is not significant. If the list is empty, no expectation
   // is supplied.
   repeated string expected_entities = 9;
 }
