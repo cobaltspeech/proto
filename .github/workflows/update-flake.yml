@@ -6,15 +6,79 @@ on:
     - cron: '0 5 * * *'
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
+concurrency:
+  group: update-flake
+  cancel-in-progress: false
 
 jobs:
   update:
-    uses: cobaltspeech/.github/.github/workflows/update-flake.yml@master
-    # Listed out rather than inherited: pass only what is declared.
-    secrets:
-      CI_PR_CREATOR_APP_CLIENT_ID: ${{ secrets.CI_PR_CREATOR_APP_CLIENT_ID }}
-      CI_PR_CREATOR_APP_KEY: ${{ secrets.CI_PR_CREATOR_APP_KEY }}
-      CI_PR_APPROVER_COBALTJENKINS_PAT: ${{ secrets.CI_PR_APPROVER_COBALTJENKINS_PAT }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: generate app token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.CI_PR_CREATOR_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_PR_CREATOR_APP_KEY }}
+
+      - name: checkout repo
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          # Push as the app rather than GITHUB_TOKEN, whose pushes never
+          # trigger further workflow runs, and so that the last pusher is not
+          # also the approver.
+          token: ${{ steps.app_token.outputs.token }}
+
+      - name: install nix
+        uses: cachix/install-nix-action@v31.11.0
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: update flake lock
+        run: nix flake update
+
+      - name: check for changes
+        id: changes
+        run: |
+          if [[ -n $(git status --porcelain flake.lock) ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "flake.lock is already up to date"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: commit and push
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.email noreply@cobaltspeech.com
+          git config user.name Cobalt
+          git checkout -B bot/flake-update
+          git commit -am "chore: flake update $(date -I)"
+          git push -u origin bot/flake-update --force
+
+      - name: create pr
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          BASE: ${{ github.event.repository.default_branch }}
+        run: |
+          if ! gh pr list --head bot/flake-update --state open \
+              --json number --jq '.[0].number' | grep -q .; then
+            gh pr create --base "${BASE}" --head bot/flake-update \
+              --title "Automated flake lock update" \
+              --body "Automated update of flake.lock."
+          fi
+
+      - name: approve and enable auto-merge
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CI_PR_APPROVER_COBALTJENKINS_PAT }}
+        run: |
+          gh pr review bot/flake-update --approve \
+            -b "Approving automated flake update."
+          gh pr merge bot/flake-update --auto --rebase

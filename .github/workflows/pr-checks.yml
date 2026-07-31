@@ -9,32 +9,40 @@ permissions:
 jobs:
   fmt-check:
     name: fmt-check
-    runs-on: self-hosted
-    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: checkout PR
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: install nix
+        uses: cachix/install-nix-action@v31.11.0
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: run fmt-check
-        run: nix develop -c ./bin/fmt-check.sh
+        run: nix develop .#ci -c ./bin/fmt-check.sh
 
   lint-check:
     name: lint-check
-    runs-on: self-hosted
-    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: checkout PR
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: install nix
+        uses: cachix/install-nix-action@v31.11.0
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: run lint-check
-        run: nix develop -c ./bin/lint-check.sh
+        run: nix develop .#ci -c ./bin/lint-check.sh
 
   breaking-check:
     name: breaking-check
-    runs-on: self-hosted
-    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: checkout PR
         uses: actions/checkout@v7
@@ -43,9 +51,13 @@ jobs:
           # buf reads the base branch from the local clone, which also needs
           # checkout to have fetched every head.
           fetch-depth: 0
+      - name: install nix
+        uses: cachix/install-nix-action@v31.11.0
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: run breaking-check
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          nix develop -c buf breaking proto \
+          nix develop .#ci -c buf breaking proto \
             --against ".git#branch=origin/${BASE_REF},subdir=proto"

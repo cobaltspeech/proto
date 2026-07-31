@@ -17,7 +17,7 @@ concurrency:
 jobs:
   gen-and-publish:
     name: gen-and-publish
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
@@ -44,6 +44,11 @@ jobs:
           # The publish script uses `git describe`.
           fetch-depth: 0
 
+      - name: install nix
+        uses: cachix/install-nix-action@v31.11.0
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: generate and publish
         env:
           GIT_AUTHOR_NAME: Cobalt
@@ -55,7 +60,7 @@ jobs:
         run: |
           # Redirect the script's ssh clones to https with the app token.
           # Set through GIT_CONFIG_* rather than `git config --global` so the
-          # token is not left behind in the runner's home directory.
+          # token is not written to disk.
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0="url.https://x-access-token:${TOKEN}@github.com/${OWNER}/.insteadOf"
           export GIT_CONFIG_VALUE_0="git@github.com:${OWNER}/"
@@ -64,6 +69,31 @@ jobs:
   slack-notify:
     needs: gen-and-publish
     if: failure()
-    uses: cobaltspeech/.github/.github/workflows/slack-build-failure-notify.yml@master
-    secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: notify slack
+        uses: slackapi/slack-github-action@v4
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          errors: true
+          payload: |
+            blocks:
+              - type: header
+                text:
+                  type: plain_text
+                  text: '🚨 Publish failed'
+                  emoji: true
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: '`${{ github.repository }}` failed to publish generated code for commit `${{ github.sha }}`.'
+              - type: actions
+                elements:
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: View run
+                      emoji: true
+                    style: danger
+                    url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
