@@ -27,8 +27,8 @@ jobs:
         id: app_token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.CI_PR_CREATOR_APP_CLIENT_ID }}
-          private-key: ${{ secrets.CI_PR_CREATOR_APP_KEY }}
+          client-id: ${{ secrets.PROTO_PUBLISHER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PROTO_PUBLISHER_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: |
             go-genproto
@@ -70,11 +70,16 @@ jobs:
     needs: gen-and-publish
     if: failure()
     runs-on: ubuntu-latest
+    env:
+      WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
+      # Skip rather than fail when no webhook is configured, so a missing
+      # notification never masks the publish failure it is reporting.
       - name: notify slack
+        if: env.WEBHOOK != ''
         uses: slackapi/slack-github-action@v4
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ env.WEBHOOK }}
           webhook-type: incoming-webhook
           errors: true
           payload: |
