@@ -3,8 +3,12 @@
 
 set -euo pipefail
 
-# cleanup before generation, just in case.
-rm -rf gen go-genproto py-genproto openapi-genproto
+workdirs=(gen go-genproto py-genproto openapi-genproto)
+
+# clean up on the way out, and again up front in case a previous run was
+# killed before its trap could fire.
+trap 'rm -rf "${workdirs[@]}"' EXIT
+rm -rf "${workdirs[@]}"
 
 protorev=$(git describe --always)
 
@@ -46,6 +50,3 @@ git diff --quiet HEAD || git commit -am "auto-update: proto=$protorev"
 git push origin master
 popd
 rm -rf openapi-genproto
-
-# cleanup generated code
-rm -rf gen

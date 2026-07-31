@@ -40,13 +40,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
-          # buf reads the base branch from the local clone.
+          # buf reads the base branch from the local clone, which also needs
+          # checkout to have fetched every head.
           fetch-depth: 0
-      - name: fetch base branch
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          git fetch origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
       - name: run breaking-check
         env:
           BASE_REF: ${{ github.base_ref }}

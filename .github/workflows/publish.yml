@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,6 +39,8 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v7
         with:
+          # Downstream pushes authenticate with the app token, not this one.
+          persist-credentials: false
           # The publish script uses `git describe`.
           fetch-depth: 0
 
