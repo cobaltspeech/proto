@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  fmt-check:
+    name: fmt-check
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: run fmt-check
+        run: nix develop -c ./bin/fmt-check.sh
+
+  lint-check:
+    name: lint-check
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: run lint-check
+        run: nix develop -c ./bin/lint-check.sh
+
+  breaking-check:
+    name: breaking-check
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          # buf reads the base branch from the local clone.
+          fetch-depth: 0
+      - name: fetch base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+      - name: run breaking-check
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          nix develop -c buf breaking proto \
+            --against ".git#branch=origin/${BASE_REF},subdir=proto"

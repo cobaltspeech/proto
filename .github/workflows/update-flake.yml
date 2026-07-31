@@ -1,0 +1,20 @@
+name: nix-flake-update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    uses: cobaltspeech/.github/.github/workflows/update-flake.yml@master
+    # Listed out rather than inherited: pass only what is declared.
+    secrets:
+      CI_PR_CREATOR_APP_CLIENT_ID: ${{ secrets.CI_PR_CREATOR_APP_CLIENT_ID }}
+      CI_PR_CREATOR_APP_KEY: ${{ secrets.CI_PR_CREATOR_APP_KEY }}
+      CI_PR_APPROVER_COBALTJENKINS_PAT: ${{ secrets.CI_PR_APPROVER_COBALTJENKINS_PAT }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

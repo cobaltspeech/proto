@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # cleanup before generation, just in case.
-rm -rf gen
+rm -rf gen go-genproto py-genproto openapi-genproto
 
 protorev=$(git describe --always)
 
