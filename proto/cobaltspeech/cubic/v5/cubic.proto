@@ -61,7 +61,7 @@ message ListModelsRequest {}
 
 // The message returned to the client by the `ListModels` method.
 message ListModelsResponse {
-  // List of models available for use that match the request.
+  // List of models available for use.
   repeated Model models = 1;
 }
 
