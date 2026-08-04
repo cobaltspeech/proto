@@ -6,8 +6,10 @@ set -euo pipefail
 workdirs=(gen go-genproto py-genproto openapi-genproto)
 
 # clean up on the way out, and again up front in case a previous run was
-# killed before its trap could fire.
-trap 'rm -rf "${workdirs[@]}"' EXIT
+# killed before its trap could fire. The paths are relative and the script
+# runs from inside the clones, so return here before removing them.
+startdir=$PWD
+trap 'cd "${startdir}" && rm -rf "${workdirs[@]}"' EXIT
 rm -rf "${workdirs[@]}"
 
 protorev=$(git describe --always)

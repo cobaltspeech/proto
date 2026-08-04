@@ -6,6 +6,11 @@ on:
 permissions:
   contents: read
 
+# Supersede in-flight checks when a PR is pushed to again.
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fmt-check:
     name: fmt-check

@@ -9,14 +9,18 @@ on:
 permissions:
   contents: read
 
-# Never let two runs rewrite the downstream repositories at once.
+# Never let two runs rewrite the downstream repositories at once. The group is
+# deliberately constant rather than per-ref: a manual run started from another
+# branch would otherwise land in its own group and publish alongside master.
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish
   cancel-in-progress: false
 
 jobs:
   gen-and-publish:
     name: gen-and-publish
+    # Only ever publish master, whichever ref a manual run was started from.
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
