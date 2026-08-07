@@ -16,6 +16,10 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      stuck_pr: ${{ steps.unresolved.outputs.number }}
+    env:
+      APPROVER_CLIENT_ID: ${{ secrets.PROTO_APPROVER_APP_CLIENT_ID }}
 
     steps:
       # No owner or repositories given, so the token covers this repository
@@ -36,6 +40,23 @@ jobs:
           # Push as the app rather than GITHUB_TOKEN, whose pushes never
           # trigger further workflow runs, leaving the PR without checks.
           token: ${{ steps.app_token.outputs.token }}
+
+      # Checked before anything is pushed, and unconditionally: a PR left over
+      # from an earlier run is worth reporting even on a day when the lock does
+      # not move.
+      - name: detect existing pr
+        id: existing_pr
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          num=$(gh pr list --head bot/flake-update --state open \
+            --json number --jq '.[0].number // empty')
+          if [[ -n "${num}" ]]; then
+            echo "an earlier run's PR is still open: #${num}"
+            echo "number=${num}" >> "$GITHUB_OUTPUT"
+          else
+            echo "no open PR from an earlier run"
+          fi
 
       - name: install nix
         uses: cachix/install-nix-action@v31.11.0
@@ -65,14 +86,138 @@ jobs:
           git push -u origin bot/flake-update --force
 
       - name: create pr
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.changes.outputs.changed == 'true' && steps.existing_pr.outputs.number == ''
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
           BASE: ${{ github.event.repository.default_branch }}
         run: |
-          if ! gh pr list --head bot/flake-update --state open \
-              --json number --jq '.[0].number' | grep -q .; then
-            gh pr create --base "${BASE}" --head bot/flake-update \
-              --title "Automated flake lock update" \
-              --body "Automated update of flake.lock."
+          gh pr create --base "${BASE}" --head bot/flake-update \
+            --title "Automated flake lock update" \
+            --body "Automated update of flake.lock."
+
+      # A distinct identity from the one that opened the pull request, which
+      # github requires. Skipped where it is not configured, leaving the pull
+      # request to be handled by hand.
+      - name: generate approver token
+        id: approver_token
+        if: env.APPROVER_CLIENT_ID != '' && (steps.changes.outputs.changed == 'true' || steps.existing_pr.outputs.number != '')
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.PROTO_APPROVER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PROTO_APPROVER_APP_KEY }}
+          permission-pull-requests: write
+
+      - name: approve and merge
+        if: steps.approver_token.outcome == 'success'
+        env:
+          APPROVER_TOKEN: ${{ steps.approver_token.outputs.token }}
+          PUBLISHER_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          # Approve a lock file update and nothing else. The branch is only
+          # ever written by the step above, but this run does not push on a day
+          # when the lock has not moved, so check what is actually there.
+          files=$(GH_TOKEN="${PUBLISHER_TOKEN}" \
+            gh pr diff bot/flake-update --name-only)
+          if [[ "${files}" != "flake.lock" ]]; then
+            echo "leaving this one alone, it carries more than the lock:"
+            echo "${files}"
+            exit 0
           fi
+
+          GH_TOKEN="${APPROVER_TOKEN}" gh pr review bot/flake-update \
+            --approve --body "Automated flake update."
+
+          # Merging runs as the identity that opened the pull request, which is
+          # allowed: only approving is barred to the author. Auto-merge cannot
+          # be turned on for a pull request that is already mergeable, which is
+          # the usual case once the approval lands, so fall back to merging
+          # outright. Rebase matches how this repository merges.
+          GH_TOKEN="${PUBLISHER_TOKEN}" \
+            gh pr merge bot/flake-update --auto --rebase \
+            || GH_TOKEN="${PUBLISHER_TOKEN}" \
+              gh pr merge bot/flake-update --rebase
+
+      # Only an earlier run's pull request that this one did not resolve is
+      # worth reporting.
+      - name: check earlier pull request
+        id: unresolved
+        if: steps.existing_pr.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          NUMBER: ${{ steps.existing_pr.outputs.number }}
+        run: |
+          state=$(gh pr view "${NUMBER}" --json state --jq .state)
+          echo "PR #${NUMBER} is ${state}"
+          if [[ "${state}" == "OPEN" ]]; then
+            echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Report a pull request left open by an earlier run.
+  notify-stuck-pr:
+    needs: update
+    if: needs.update.outputs.stuck_pr != ''
+    runs-on: ubuntu-latest
+    env:
+      WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: notify slack
+        if: env.WEBHOOK != ''
+        uses: slackapi/slack-github-action@v4
+        with:
+          webhook: ${{ env.WEBHOOK }}
+          webhook-type: incoming-webhook
+          errors: true
+          payload: |
+            blocks:
+              - type: header
+                text:
+                  type: plain_text
+                  text: '⏳ Flake update did not merge'
+                  emoji: true
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: '`${{ github.repository }}` PR #${{ needs.update.outputs.stuck_pr }} (`bot/flake-update`) was open before this run and still is.'
+              - type: actions
+                elements:
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: View PR
+                      emoji: true
+                    url: '${{ github.server_url }}/${{ github.repository }}/pull/${{ needs.update.outputs.stuck_pr }}'
+
+  notify-failure:
+    needs: update
+    if: failure()
+    runs-on: ubuntu-latest
+    env:
+      WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: notify slack
+        if: env.WEBHOOK != ''
+        uses: slackapi/slack-github-action@v4
+        with:
+          webhook: ${{ env.WEBHOOK }}
+          webhook-type: incoming-webhook
+          errors: true
+          payload: |
+            blocks:
+              - type: header
+                text:
+                  type: plain_text
+                  text: '🚨 Flake update failed'
+                  emoji: true
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: '`${{ github.repository }}` failed to update flake.lock.'
+              - type: actions
+                elements:
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: View run
+                      emoji: true
+                    style: danger
+                    url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
