@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
-      stuck_pr: ${{ steps.unresolved.outputs.number }}
+      stuck_pr: ${{ steps.existing_pr.outputs.number }}
     env:
       APPROVER_CLIENT_ID: ${{ secrets.PROTO_APPROVER_APP_CLIENT_ID }}
 
@@ -137,22 +137,8 @@ jobs:
             || GH_TOKEN="${PUBLISHER_TOKEN}" \
               gh pr merge bot/flake-update --rebase
 
-      # Only an earlier run's pull request that this one did not resolve is
-      # worth reporting.
-      - name: check earlier pull request
-        id: unresolved
-        if: steps.existing_pr.outputs.number != ''
-        env:
-          GH_TOKEN: ${{ steps.app_token.outputs.token }}
-          NUMBER: ${{ steps.existing_pr.outputs.number }}
-        run: |
-          state=$(gh pr view "${NUMBER}" --json state --jq .state)
-          echo "PR #${NUMBER} is ${state}"
-          if [[ "${state}" == "OPEN" ]]; then
-            echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
-          fi
-
-  # Report a pull request left open by an earlier run.
+  # A pull request left over from a previous run means that run did not
+  # land it.
   notify-stuck-pr:
     needs: update
     if: needs.update.outputs.stuck_pr != ''
@@ -172,12 +158,12 @@ jobs:
               - type: header
                 text:
                   type: plain_text
-                  text: '⏳ Flake update did not merge'
+                  text: '⏳ Flake-update PR needs attention'
                   emoji: true
               - type: section
                 text:
                   type: mrkdwn
-                  text: '`${{ github.repository }}` PR #${{ needs.update.outputs.stuck_pr }} (`bot/flake-update`) was open before this run and still is.'
+                  text: '`${{ github.repository }}` PR #${{ needs.update.outputs.stuck_pr }} (`bot/flake-update`) is open from a previous run and has not auto-merged.'
               - type: actions
                 elements:
                   - type: button
