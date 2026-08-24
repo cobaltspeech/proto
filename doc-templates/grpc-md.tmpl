@@ -25,6 +25,11 @@ The service contains the methods that can be called, and the “messages” are 
 {{end}} <!-- end methods -->
 {{end}} <!-- end services -->
 
+{{/* Guard on the slice, not .HasMessages / .HasEnums: those report only
+     top-level declarations, so a file whose sole enum is nested inside a
+     message -- cobaltspeech/cubic/v1 -- reports false while .Enums still
+     yields it, and the section would be dropped with its content. */ -}}
+{{if .Messages -}}
 ## Messages
 * If two or more fields in a message are labeled [**oneof**](https://developers.google.com/protocol-buffers/docs/proto3#oneof), 
 then each method call using that message must have exactly one of the fields populated
@@ -44,7 +49,9 @@ then each method call using that message must have exactly one of the fields pop
 {{end}} <!-- end Fields -->
 {{end}} <!-- end HasFields -->
 {{end}} <!-- end messages -->
+{{- end}}
 
+{{if .Enums -}}
 ## Enums
 {{range .Enums}}
 
@@ -58,6 +65,7 @@ then each method call using that message must have exactly one of the fields pop
 {{end}}
 
 {{end}} <!-- end Enums -->
+{{- end}}
 {{end}} <!-- end Files -->
 
 ## Scalar Value Types
