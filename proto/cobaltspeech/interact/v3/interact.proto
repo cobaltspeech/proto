@@ -451,12 +451,12 @@ message ASRResult {
 // confidence is above the server's logging threshold but below its acceptance
 // threshold. Near misses never wake the system.
 //
-// Wakeword results are sent in the order they were detected: any near misses,
-// then at most one accepted result, and no wakeword result after it. With a
-// wakeword model configured on the server, no partial result is sent before
-// the accepted one. Without one, the server finds the wakeword in the final
-// transcript, so partial results can come first and only the accepted result
-// is sent.
+// With a wakeword model configured on the server, wakeword results are sent in
+// the order they were detected: any near misses, then at most one accepted
+// result, and no wakeword result after it. No partial result is sent before
+// the accepted one. Without a wakeword model, the server looks for the wakeword
+// in each final transcript: partial results can come first, and only accepted
+// results are sent.
 //
 // A stream can end without an accepted result, so a client must check
 // `is_accepted` rather than treat every WakewordResult as a wake.
