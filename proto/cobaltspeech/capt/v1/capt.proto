@@ -70,17 +70,9 @@ message EvaluateResponse {
   // model that was chosen in the EvaluationConfig.
   EvaluationResult evaluation_result = 1;
 
-  // A non-fatal error message. If a server encountered a non-fatal error when
-  // processing the request, it will be returned in this message.
-  // The server will continue to process audio and produce further results.
-  // Clients can continue streaming audio even after receiving these messages.
-  // This error message is meant to be informational.
-  //
-  // An example of when these errors maybe produced: audio is sampled at a
-  // lower rate than expected by model, producing possibly less accurate
-  // results.
-  //
-  // This field will be unset if there is no error to report.
+  // Reserved for non-fatal, informational errors. Not currently populated:
+  // the server reports every failure as a gRPC status error instead, and
+  // leaves this field unset.
   EvaluationError error = 2;
 }
 
@@ -108,24 +100,16 @@ message StreamingEvaluateResponse {
   // model that was chosen in the EvaluationConfig.
   EvaluationResult evaluation_result = 1;
 
-  // A non-fatal error message. If a server encountered a non-fatal error when
-  // processing the request, it will be returned in this message.
-  // The server will continue to process audio and produce further results.
-  // Clients can continue streaming audio even after receiving these messages.
-  // This error message is meant to be informational.
-  //
-  // An example of when these errors maybe produced: audio is sampled at a
-  // lower rate than expected by model, producing possibly less accurate
-  // results.
-  //
-  // This field will be unset if there is no error to report.
+  // Reserved for non-fatal, informational errors. Not currently populated:
+  // the server reports every failure as a gRPC status error instead, and
+  // leaves this field unset.
   EvaluationError error = 2;
 }
 
 // Description of a CAPT model.
 message Model {
   // Unique identifier of the model. This identifier is used to choose the
-  // model the model when configuring a StreamingEvaluate request.
+  // model when configuring an `Evaluate` or `StreamingEvaluate` request.
   string id = 1;
 
   // Model name. This is a concise name describing the model, and may be
@@ -179,7 +163,7 @@ enum ModelKind {
   MODEL_KIND_PHONEME_EVALUATION = 2;
 }
 
-// Configuration for a StreamingEvaluateRequest.
+// Configuration for an `Evaluate` or `StreamingEvaluate` request.
 message EvaluationConfig {
   // ID of the model to use. A list of supported IDs can be found using the
   // `ListModels` call.
@@ -196,7 +180,7 @@ message EvaluationConfig {
   repeated string alternative_reference_text = 4;
 
   // This is an optional field. If there is any metadata associated with the
-  // audio being sent, use this field to provide it to the recognizer. The
+  // audio being sent, use this field to provide it with the request. The
   // server may record this metadata when processing the request. The server
   // does not use this field for any other purpose.
   EvaluationMetadata metadata = 5;
@@ -210,7 +194,7 @@ message EvaluationMetadata {
   string custom_metadata = 1;
 
   // This is an optional field to specify custom ID to identify the
-  // evaluation request. The custom ID must be a string of upto 64 bytes, and
+  // evaluation request. The custom ID must be a string of up to 64 bytes, and
   // only alphabets, digits, hyphens and underscores are allowed. This ID may
   // be recorded by the server in logs or other storage, and should therefore
   // not include any sensitive information.
@@ -334,28 +318,35 @@ message EvaluationResult {
   // results, and clients should generally not depend on their availability.
   bool is_partial = 1;
 
-  // Overall evaluation score, between 0 and 1 inclusive, with 1 indicating a
-  // perfect match between the reference text and what was said in the audio.
-  // If alternative reference text(s) are specified, then the score will be
-  // take those into account and be based on the reference text that aligns
-  // the best with recognized tokens.
+  // Overall evaluation score, between 0 and 1 inclusive: the mean of the
+  // scores of the reference tokens. Insertions are not counted, so extra
+  // sounds do not lower it: a score of 1 means every expected token scored 1,
+  // not that nothing else was said.
+  //
+  // If alternative reference texts are given, this is the highest score among
+  // the primary reference text and the alternatives. It can therefore belong
+  // to an alternative while `alignments` always belongs to the primary text;
+  // each alternative's own score is in `alternative_alignments`.
   float score = 2;
 
-  // Alignment between the primary expected reference text tokens and
-  // recognized tokens.
+  // Alignment between the primary reference text and the recognized tokens.
+  //
+  // This holds one entry per reference word, in order, plus one entry for
+  // each place extra sounds were heard before the first word, between two
+  // words or after the last. Those entries have an empty `text` and contain
+  // only ALIGNMENT_KIND_INSERTION tokens, so this list cannot be paired with
+  // the reference words by index. Extra sounds inside a word appear among that
+  // word's tokens only when the model is configured to report them.
   repeated AlignedWord alignments = 3;
 
-  // Alignments against alternative reference text tokens (if specified) and
+  // Alignments against alternative reference texts (if specified) and the
   // recognized tokens.
   repeated AlternativeAlignment alternative_alignments = 4;
 
-  // If true, indicates that a speech endpoint has been detected.
-  //
-  // A speech endpoint signifies that the server believes the user has finished
-  // their utterance, typically after detecting a specific duration of silence.
-  //
-  // NOTE: Server support for endpoint detection is optional. Clients must be
-  // robust to this field never being set.
+  // True when the speech recognizer has finalized a segment of the audio.
+  // That can happen before the audio ends, so it may be true on a partial
+  // result, and it is always true on the final result, whether or not a pause
+  // was detected. It says nothing about the speech itself.
   bool is_speech_endpoint = 5;
 }
 
@@ -365,10 +356,14 @@ message AlignedWord {
   // The actual word.
   string text = 1;
 
-  // The timestamp at which this token starts in the audio, in milliseconds.
+  // The timestamp at which this word starts in the audio, in milliseconds.
+  //
+  // A word none of whose tokens were recognized in the audio, so that every
+  // token is a deletion, has no timing and reports 0 for both this and
+  // `duration_ms`.
   uint64 start_time_ms = 2;
 
-  // The duration of this token in the audio, in milliseconds.
+  // The duration of this word in the audio, in milliseconds.
   uint64 duration_ms = 3;
 
   // The tokens that make up the word.
@@ -381,26 +376,25 @@ message AlternativeAlignment {
   // The alternative reference text.
   string reference_text = 1;
 
-  // Evaluation score, between 0 and 1 inclusive, with 1 indicating a perfect
-  // match between the alternative reference text and what was said in the
-  // audio.
+  // Evaluation score for this alternative, between 0 and 1 inclusive,
+  // computed the same way as `EvaluationResult.score`.
   float score = 2;
 
-  // Alignment between the alternative reference text tokens and recognized
-  // tokens.
+  // Alignment between the alternative reference text and the recognized
+  // tokens, in the same form as `EvaluationResult.alignments`.
   repeated AlignedWord alignments = 3;
 }
 
 // AlignedToken contains a single reference token and the alternate hypotheses
 // recognized from the audio that could be aligned with the reference token.
 //
-// If kind == ALIGNMENT_KIND_MATCH or ALIGNMENT_KIND_SUBSTITUTION, both the
-// reference token and hypotheses list will be populated. The score will be
-// based on the confidence value of the reference token within the hypotheses,
-// and it is what decides between the two: a score of 0.5 or above is a match,
-// and anything lower is a substitution. A substitution's score therefore lies
-// in [0, 0.5) rather than always being 0. In the case of a substitution, the
-// hypotheses list may not contain the actual reference token at all.
+// If kind == ALIGNMENT_KIND_MATCH or ALIGNMENT_KIND_SUBSTITUTION, the reference
+// token is populated and the hypotheses list normally is. The score decides
+// between the two: a score of 0.5 or above is a match, and anything lower is a
+// substitution, so a substitution's score lies in [0, 0.5) rather than always
+// being 0. The hypotheses list need not contain the reference token, for
+// either kind: a model can accept other tokens as alternatives for it, whose
+// confidence then counts toward the score.
 //
 // If kind == ALIGNMENT_KIND_DELETION, the hypotheses will be an empty list and
 // score will be 0.
@@ -414,13 +408,16 @@ message AlignedToken {
   // The actual reference token.
   string reference = 2;
 
-  // The score for this token, between 0 and 1 inclusive, based on the
-  // confidence value of the token within the recognized token hypotheses from
-  // the audio.
+  // The score for this token, between 0 and 1 inclusive. This is a calibrated
+  // score, not the recognizer's raw confidence: the confidence of the
+  // reference token, plus that of any alternatives the model accepts for it,
+  // rescaled so that a cutoff configured for the token maps to 0.5. A token
+  // whose cutoff is 0 always scores 1. Apply thresholds to this value rather
+  // than to the hypotheses' `confidence`, or they will disagree with `kind`.
   float score = 3;
 
   // The recognized tokens from the audio that have been aligned to this
-  // reference token.
+  // reference token. Tokens the model treats as non-speech are left out.
   repeated AlignmentHypothesis hypotheses = 4;
 }
 
@@ -430,8 +427,8 @@ message AlignmentHypothesis {
   // The actual token.
   string token = 1;
 
-  // The confidence with which this token was recognized in the audio, between
-  // 0 and 1 inclusive.
+  // The recognizer's raw confidence for this token, between 0 and 1 inclusive.
+  // Unlike `AlignedToken.score`, it is not calibrated per token.
   float confidence = 2;
 
   // The timestamp at which this token starts in the audio, in milliseconds.
@@ -459,7 +456,7 @@ enum AlignmentKind {
   // recognized tokens from audio.
   ALIGNMENT_KIND_DELETION = 3;
 
-  // A insertion implies that a extraneous token has been recognized in the
+  // An insertion implies that an extraneous token has been recognized in the
   // audio, that cannot be matched to any token in the reference.
   ALIGNMENT_KIND_INSERTION = 4;
 }
