@@ -1,0 +1,462 @@
+// Copyright (2024--present) Cobalt Speech and Language Inc.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cobaltspeech.capt.v1;
+
+// Service that implements the Cobalt CAPT API.
+service CAPTService {
+  // Returns version information from the server.
+  rpc Version(VersionRequest) returns (VersionResponse) {}
+
+  // Returns information about the models available on the server.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {}
+
+  // Performs synchronous speech evaluation by receiving results after all
+  // audio has been sent and processed. It is expected that this request be
+  // typically used for short audio content: less than a minute long. For
+  // longer content, the `StreamingEvaluate` method should be preferred.
+  rpc Evaluate(EvaluateRequest) returns (EvaluateResponse) {}
+
+  // Performs bidirectional streaming for evaluating speech by receiving
+  // results while sending audio. This method is only available via GRPC and
+  // not via HTTP+JSON. However, a web browser may use websockets to use this
+  // service.
+  rpc StreamingEvaluate(stream StreamingEvaluateRequest) returns (stream StreamingEvaluateResponse) {}
+}
+
+// The top-level message sent by the client for the `Version` method.
+message VersionRequest {}
+
+// The message sent by the server for the `Version` method.
+message VersionResponse {
+  // Version of the server handling these requests.
+  string version = 1;
+}
+
+// The top-level message sent by the client for the `ListModels` method.
+message ListModelsRequest {}
+
+// The message returned to the client by the `ListModels` method.
+message ListModelsResponse {
+  // List of models available for use that match the request.
+  repeated Model models = 1;
+}
+
+// The top-level message sent by the client for the `Evaluate` method. Both the
+// `EvaluationConfig` and `Audio` fields are required. The entire audio data
+// must be sent in one request. If your audio data is larger, please use the
+// `StreamingEvaluate` call.
+message EvaluateRequest {
+  EvaluationConfig config = 1;
+  Audio audio = 2;
+}
+
+// The message returned by the server for the `Evaluate` method.
+message EvaluateResponse {
+  // Response from the server. The kind of result depends on the kind of the
+  // model that was chosen in the EvaluationConfig.
+  EvaluationResult evaluation_result = 1;
+
+  // Reserved for non-fatal, informational errors. Not currently populated:
+  // the server reports every failure as a gRPC status error instead, and
+  // leaves this field unset.
+  EvaluationError error = 2;
+}
+
+// The top level messages sent by the client for the `StreamingEvaluate` method.
+// In this streaming call, multiple `StreamingEvaluateRequest` messages should
+// be sent. The first message must contain a `EvaluationConfig` message, and all
+// subsequent messages must contain `Audio` only.
+//
+// An `Audio` message with empty data marks the end of the audio. The server
+// stops reading, finishes processing and sends the final result, and the
+// stream accepts nothing further. Closing the send side of the stream does the
+// same, so an empty message is only needed by a client that cannot half-close,
+// such as a websocket connection through the HTTP gateway. Sending one before
+// the audio is complete truncates the input.
+message StreamingEvaluateRequest {
+  oneof request {
+    EvaluationConfig config = 1;
+    Audio audio = 2;
+  }
+}
+
+// The message returned by the server for the `StreamingEvaluate` method.
+message StreamingEvaluateResponse {
+  // Response from the server. The kind of result depends on the kind of the
+  // model that was chosen in the EvaluationConfig.
+  EvaluationResult evaluation_result = 1;
+
+  // Reserved for non-fatal, informational errors. Not currently populated:
+  // the server reports every failure as a gRPC status error instead, and
+  // leaves this field unset.
+  EvaluationError error = 2;
+}
+
+// Description of a CAPT model.
+message Model {
+  // Unique identifier of the model. This identifier is used to choose the
+  // model when configuring an `Evaluate` or `StreamingEvaluate` request.
+  string id = 1;
+
+  // Model name. This is a concise name describing the model, and may be
+  // presented to the end-user, for example, to help choose which model to use
+  // for their task.
+  string name = 2;
+
+  // The specific kind of model. This determines what type of results
+  // it sends back, and additional config requirements if any.
+  ModelKind kind = 3;
+
+  // Model Attributes.
+  ModelAttributes attributes = 4;
+}
+
+// Attributes of a Capt model.
+message ModelAttributes {
+  // Audio sample rate (native) supported by the model.
+  uint32 sample_rate = 1;
+
+  // Metadata associated with the model.
+  ModelMetadata metadata = 2;
+}
+
+// Metadata associated with a Capt model.
+message ModelMetadata {
+  // Model version in semver format (e.g. 1.0.0). If the version is not known,
+  // it will default to "unknown".
+  string version = 1;
+
+  // Date the model was built in YYYY-MM-DD format. If the version is not
+  // known, it will default to "unknown".
+  string build_date = 2;
+}
+
+enum ModelKind {
+  // Default value of this type.
+  MODEL_KIND_UNSPECIFIED = 0;
+
+  // Model for evaluating the accuracy of spoken text from audio. This is
+  // done by first recognizing what's said in the audio, and then aligning
+  // expected and recognized tokens (phonemes, syllables, etc.). This model
+  // returns results in the form of EvaluationResult messages.
+  MODEL_KIND_SPEECH_EVALUATION = 1;
+
+  // Model for evaluating the accuracy of phonemes pronounced in isolation
+  // from audio. This is done in a way similar to speech evaluation models,
+  // but is more accurate for single phonemes in isolation, which a regular
+  // speech model may not recognize correctly. This model returns results in
+  // the form of EvaluationResult messages.
+  MODEL_KIND_PHONEME_EVALUATION = 2;
+}
+
+// Configuration for an `Evaluate` or `StreamingEvaluate` request.
+message EvaluationConfig {
+  // ID of the model to use. A list of supported IDs can be found using the
+  // `ListModels` call.
+  string model_id = 1;
+
+  // Format of the audio to be sent.
+  AudioFormat audio_format = 2;
+
+  // Reference Text that is expected to be contained in the audio.
+  string reference_text = 3;
+
+  // Alternative reference text(s) that are also acceptable if recognized in
+  // the audio.
+  repeated string alternative_reference_text = 4;
+
+  // This is an optional field. If there is any metadata associated with the
+  // audio being sent, use this field to provide it with the request. The
+  // server may record this metadata when processing the request. The server
+  // does not use this field for any other purpose.
+  EvaluationMetadata metadata = 5;
+}
+
+// Metadata associated with the evaluation request
+message EvaluationMetadata {
+  // Any custom metadata that the client wants to associate with the
+  // recording. This could be a simple string (e.g. a tracing ID) or
+  // structured data (e.g. JSON).
+  string custom_metadata = 1;
+
+  // This is an optional field to specify custom ID to identify the
+  // evaluation request. The custom ID must be a string of up to 64 bytes, and
+  // only alphabets, digits, hyphens and underscores are allowed. This ID may
+  // be recorded by the server in logs or other storage, and should therefore
+  // not include any sensitive information.
+  string custom_id = 2;
+}
+
+// Format of the audio to be sent for recognition.
+//
+// Depending on how they are configured, server instances of this service may
+// not support all the formats provided in the API. One format that is
+// guaranteed to be supported is the RAW format with little-endian 16-bit
+// signed samples with the sample rate matching that of the model being
+// requested.
+message AudioFormat {
+  oneof audio_format {
+    // Audio is raw data without any headers
+    AudioFormatRAW audio_format_raw = 1;
+
+    // Audio has a self-describing header. Headers are expected to be sent
+    // at the beginning of the entire audio file/stream, and not in every
+    // `Audio` message.
+    //
+    // The default value of this type is AUDIO_FORMAT_HEADERED_UNSPECIFIED.
+    // If this value is used, the server may attempt to detect the format of
+    // the audio. However, it is recommended that the exact format be
+    // specified.
+    AudioFormatHeadered audio_format_headered = 2;
+  }
+}
+
+// Details of audio in raw format
+message AudioFormatRAW {
+  // Encoding of the samples. It must be specified explicitly and using the
+  // default value of `AUDIO_ENCODING_UNSPECIFIED` will result in an error.
+  AudioEncoding encoding = 1;
+
+  // Bit depth of each sample (e.g. 8, 16, 24, 32, etc.). This is a required
+  // field.
+  uint32 bit_depth = 2;
+
+  // Byte order of the samples. This field must be set to a value other than
+  // `BYTE_ORDER_UNSPECIFIED` when the `bit_depth` is greater than 8.
+  ByteOrder byte_order = 3;
+
+  // Sampling rate in Hz. This is a required field.
+  uint32 sample_rate = 4;
+
+  // Number of channels present in the audio. E.g.: 1 (mono), 2 (stereo), etc.
+  // This is a required field.
+  uint32 channels = 5;
+}
+
+// Byte order of multi-byte data
+enum ByteOrder {
+  // BYTE_ORDER_UNSPECIFIED is the default value of this type.
+  BYTE_ORDER_UNSPECIFIED = 0;
+
+  // Little Endian byte order
+  BYTE_ORDER_LITTLE_ENDIAN = 1;
+
+  // Big Endian byte order
+  BYTE_ORDER_BIG_ENDIAN = 2;
+}
+
+// The encoding of the audio data to be sent for recognition.
+enum AudioEncoding {
+  // AUDIO_ENCODING_UNSPECIFIED is the default value of this type and will
+  // result in an error.
+  AUDIO_ENCODING_UNSPECIFIED = 0;
+
+  // PCM signed-integer
+  AUDIO_ENCODING_SIGNED = 1;
+
+  // PCM unsigned-integer
+  AUDIO_ENCODING_UNSIGNED = 2;
+
+  // PCM IEEE-Float
+  AUDIO_ENCODING_IEEE_FLOAT = 3;
+
+  // G.711 mu-law
+  AUDIO_ENCODING_ULAW = 4;
+
+  // G.711 a-law
+  AUDIO_ENCODING_ALAW = 5;
+}
+
+enum AudioFormatHeadered {
+  // AUDIO_FORMAT_HEADERED_UNSPECIFIED is the default value of this type.
+  AUDIO_FORMAT_HEADERED_UNSPECIFIED = 0;
+
+  // WAV with RIFF headers
+  AUDIO_FORMAT_HEADERED_WAV = 1;
+
+  // MP3 format with a valid frame header at the beginning of data
+  AUDIO_FORMAT_HEADERED_MP3 = 2;
+
+  // FLAC format
+  AUDIO_FORMAT_HEADERED_FLAC = 3;
+
+  // Opus format with OGG header
+  AUDIO_FORMAT_HEADERED_OGG_OPUS = 4;
+}
+
+// Audio to be sent to Capt.
+message Audio {
+  bytes data = 1;
+}
+
+// Developer-facing error message about a non-fatal process issue.
+message EvaluationError {
+  string message = 1;
+}
+
+// EvaluationResult contains the result generated by a speech evaluation model.
+message EvaluationResult {
+  // If this is set to true, it denotes that the result is an interim partial
+  // result, and could change after more audio is processed. If unset, or set
+  // to false, it denotes that this is a final result and will not change.
+  //
+  // Servers are not required to implement support for returning partial
+  // results, and clients should generally not depend on their availability.
+  bool is_partial = 1;
+
+  // Overall evaluation score, between 0 and 1 inclusive: the mean of the
+  // scores of the reference tokens. Insertions are not counted, so extra
+  // sounds do not lower it: a score of 1 means every expected token scored 1,
+  // not that nothing else was said.
+  //
+  // If alternative reference texts are given, this is the highest score among
+  // the primary reference text and the alternatives. It can therefore belong
+  // to an alternative while `alignments` always belongs to the primary text;
+  // each alternative's own score is in `alternative_alignments`.
+  float score = 2;
+
+  // Alignment between the primary reference text and the recognized tokens.
+  //
+  // This holds one entry per reference word, in order, plus one entry for
+  // each place extra sounds were heard before the first word, between two
+  // words or after the last. Those entries have an empty `text` and contain
+  // only ALIGNMENT_KIND_INSERTION tokens, so this list cannot be paired with
+  // the reference words by index. Extra sounds inside a word appear among that
+  // word's tokens only when the model is configured to report them.
+  repeated AlignedWord alignments = 3;
+
+  // Alignments against alternative reference texts (if specified) and the
+  // recognized tokens.
+  repeated AlternativeAlignment alternative_alignments = 4;
+
+  // True when the speech recognizer has finalized a segment of the audio.
+  // That can happen before the audio ends, so it may be true on a partial
+  // result, and it is always true on the final result, whether or not a pause
+  // was detected. It says nothing about the speech itself.
+  bool is_speech_endpoint = 5;
+}
+
+// AlignedWord contains the aligned tokens within a single word in the reference
+// text.
+message AlignedWord {
+  // The actual word.
+  string text = 1;
+
+  // The timestamp at which this word starts in the audio, in milliseconds.
+  //
+  // A word none of whose tokens were recognized in the audio, so that every
+  // token is a deletion, has no timing and reports 0 for both this and
+  // `duration_ms`.
+  uint64 start_time_ms = 2;
+
+  // The duration of this word in the audio, in milliseconds.
+  uint64 duration_ms = 3;
+
+  // The tokens that make up the word.
+  repeated AlignedToken tokens = 4;
+}
+
+// AlternativeAlignment contains alignments against alternative reference
+// text(s) if specified in the EvaluationConfig.
+message AlternativeAlignment {
+  // The alternative reference text.
+  string reference_text = 1;
+
+  // Evaluation score for this alternative, between 0 and 1 inclusive,
+  // computed the same way as `EvaluationResult.score`.
+  float score = 2;
+
+  // Alignment between the alternative reference text and the recognized
+  // tokens, in the same form as `EvaluationResult.alignments`.
+  repeated AlignedWord alignments = 3;
+}
+
+// AlignedToken contains a single reference token and the alternate hypotheses
+// recognized from the audio that could be aligned with the reference token.
+//
+// If kind == ALIGNMENT_KIND_MATCH or ALIGNMENT_KIND_SUBSTITUTION, the reference
+// token is populated and the hypotheses list normally is. The score decides
+// between the two: a score of 0.5 or above is a match, and anything lower is a
+// substitution, so a substitution's score lies in [0, 0.5) rather than always
+// being 0. The hypotheses list need not contain the reference token, for
+// either kind: a model can accept other tokens as alternatives for it, whose
+// confidence then counts toward the score.
+//
+// If kind == ALIGNMENT_KIND_DELETION, the hypotheses will be an empty list and
+// score will be 0.
+//
+// If kind == ALIGNMENT_KIND_INSERTION, the reference token will be an empty
+// string and score will be 0.
+message AlignedToken {
+  // The kind of alignment for this token.
+  AlignmentKind kind = 1;
+
+  // The actual reference token.
+  string reference = 2;
+
+  // The score for this token, between 0 and 1 inclusive. This is a calibrated
+  // score, not the recognizer's raw confidence: the confidence of the
+  // reference token, plus that of any alternatives the model accepts for it,
+  // rescaled so that a cutoff configured for the token maps to 0.5. A token
+  // whose cutoff is 0 always scores 1. Apply thresholds to this value rather
+  // than to the hypotheses' `confidence`, or they will disagree with `kind`.
+  float score = 3;
+
+  // The recognized tokens from the audio that have been aligned to this
+  // reference token. Tokens the model treats as non-speech are left out.
+  repeated AlignmentHypothesis hypotheses = 4;
+}
+
+// AlignmentHypothesis contains the metadata for a token recognized from audio,
+// including its timestamps and confidence scores.
+message AlignmentHypothesis {
+  // The actual token.
+  string token = 1;
+
+  // The recognizer's raw confidence for this token, between 0 and 1 inclusive.
+  // Unlike `AlignedToken.score`, it is not calibrated per token.
+  float confidence = 2;
+
+  // The timestamp at which this token starts in the audio, in milliseconds.
+  uint64 start_time_ms = 3;
+
+  // The duration of this token in the audio, in milliseconds.
+  uint64 duration_ms = 4;
+}
+
+// AlignmentKind represents one of four alignment outcomes possible: a Match,
+// Substitution, Deletion or Insertion.
+enum AlignmentKind {
+  // Default value of this type.
+  ALIGNMENT_KIND_UNSPECIFIED = 0;
+
+  // A match implies that the reference and recognized token from audio are a
+  // match with a reasonable amount of confidence.
+  ALIGNMENT_KIND_MATCH = 1;
+
+  // A substitution implies that the reference token has been replaced by a
+  // different token in the recognized tokens from the audio.
+  ALIGNMENT_KIND_SUBSTITUTION = 2;
+
+  // A deletion implies that the reference token was not found in the
+  // recognized tokens from audio.
+  ALIGNMENT_KIND_DELETION = 3;
+
+  // An insertion implies that an extraneous token has been recognized in the
+  // audio, that cannot be matched to any token in the reference.
+  ALIGNMENT_KIND_INSERTION = 4;
+}
