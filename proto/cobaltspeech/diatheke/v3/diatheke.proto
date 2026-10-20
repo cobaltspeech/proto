@@ -415,10 +415,10 @@ message StreamASRWithPartialsResponse {
 
     // Result about a wakeword candidate: the accepted wakeword or, when the
     // server reports near misses, a near miss. This field is only available if
-    // alert words are configured on the server, and if the current context
-    // requires the presence of a wakeword. Every wakeword result is sent before
-    // the final `asr_result`. See `WakewordResult` for how many are sent and in
-    // what order.
+    // wakewords are configured on the server, and if the current context
+    // requires the presence of a wakeword. Every `WakewordResult` is sent
+    // before the final `asr_result`. See `WakewordResult` for how many are sent
+    // and in what order.
     WakewordResult wakeword_result = 3;
   }
 }
@@ -447,38 +447,50 @@ message ASRResult {
   cobaltspeech.cubic.v5.RecognitionResult cubic_result = 4;
 }
 
-// The result from the ASR stream about a wakeword candidate: something the
-// wakeword detection scored as a possible wakeword.
+// Information about a wakeword candidate: either the accepted wakeword or a
+// near miss.
 //
-// By default the server sends a single WakewordResult, for the accepted
-// wakeword. A server configured to report near misses also sends one for each
-// near miss, with `is_accepted` false. A near miss is a candidate whose
-// confidence is above the server's logging threshold but below its acceptance
-// threshold. Near misses never wake the system.
+// A `WakewordResult` does not by itself mean the wakeword was accepted; check
+// `is_accepted`. A near miss is a candidate whose confidence is above the
+// server's logging threshold but below its acceptance threshold. Both
+// thresholds are server configuration and are not sent to the client. By
+// default the server does not report near misses. The server does not treat a
+// near miss as a wake; a client may still act on one, for example by asking
+// "did you say...?".
 //
-// With a wakeword model configured on the server, wakeword results are sent in
-// the order they were detected: any near misses, then at most one accepted
-// result, and no wakeword result after it. No partial result is sent before
-// the accepted one. Without a wakeword model, the server looks for the wakeword
-// in each final transcript: partial results can come first, and only accepted
-// results are sent.
+// Near misses, if any, are sent as they are detected and before the accepted
+// result. Beyond that, which of the two cases below applies depends on the
+// server configuration.
 //
-// A stream can end without an accepted result, so a client must check
-// `is_accepted` rather than treat every WakewordResult as a wake.
+// With a wakeword service available, the server sends at most one accepted
+// result per stream, and no `WakewordResult` after it. A server configured to
+// report near misses also sends them. No `partial_result` message is sent
+// before the accepted result. What the client receives when the audio ends
+// before a wakeword is accepted is not specified yet; in particular, it may
+// receive `partial_result` messages and a final `asr_result` without an
+// accepted `WakewordResult`.
+//
+// With no wakeword service available, the server matches the wakeword in each
+// final transcript and sends only accepted results, possibly more than one per
+// stream. `partial_result` messages can come first.
 message WakewordResult {
-  // The end-timestamp of the detected wakeword in milliseconds.
+  // When the candidate was detected, in milliseconds from the start of the
+  // stream's audio. With a wakeword service available, this is the end of the
+  // wakeword. With no wakeword service available, it is the start of the
+  // utterance that contains the wakeword.
   uint64 timestamp_ms = 1;
 
   // Confidence of the detected wakeword.
   double confidence = 2;
 
-  // True if the wakeword was accepted.
+  // True if the server accepted the wakeword. False means this result is a
+  // near miss.
   bool is_accepted = 3;
 
   // Metadata associated with this wakeword result, in JSON format. The contents
   // are opaque to the API and may include system-specific information such as the
-  // location of stored audio. Stored files are written in the background, so a
-  // file named here may not exist yet when this result is received.
+  // location of stored audio. If the metadata names a stored file, the file
+  // may not exist yet when this result is received.
   string metadata = 4;
 }
 
