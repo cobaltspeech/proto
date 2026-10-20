@@ -60,10 +60,9 @@ service InteractService {
   // sending audio. Each result will either be a partial ASR result, or a final
   // result. Partial results will be sent as soon as they are ready. A final
   // result will be sent exactly once, and the stream will be closed then. If a
-  // session requires a wakeword, which results are sent and when depends on the
-  // server's wakeword configuration; see `WakewordResult`. The ASRResult in the
-  // final message maybe used in the UpdateSession method for further dialog
-  // processing.
+  // session requires a wakeword, see `WakewordResult` for which results are
+  // sent. The ASRResult in the final message maybe used in the UpdateSession
+  // method for further dialog processing.
   rpc StreamASRWithPartials(stream StreamASRWithPartialsRequest) returns (stream StreamASRWithPartialsResponse) {}
 
   // Create an ASR stream for transcription. Unlike StreamASR,
@@ -447,29 +446,27 @@ message ASRResult {
 // A `WakewordResult` does not by itself mean the wakeword was accepted; check
 // `is_accepted`. A near miss is a candidate whose confidence is above the
 // server's logging threshold but below its acceptance threshold. Both
-// thresholds are server configuration and are not sent to the client. By
-// default the server does not report near misses. The server does not treat a
-// near miss as a wake; a client may still act on one, for example by asking
-// "did you say...?".
+// thresholds are server configuration and are not sent to the client. The
+// server does not treat a near miss as a wake; a client may still act on one,
+// for example by asking "did you say...?".
 //
-// Near misses, if any, are sent as they are detected and before the accepted
-// result. Beyond that, which of the two cases below applies depends on the
-// server configuration.
+// With a wakeword service available, the server accepts at most one wakeword
+// per stream. If it accepts one, no `partial_result` message is sent before
+// the accepted `WakewordResult`.
 //
-// With a wakeword service available, the server sends at most one accepted
-// result per stream, and no `WakewordResult` after it. A server configured to
-// report near misses also sends them. No `partial_result` message is sent
-// before the accepted result. What the client receives when the audio ends
-// before a wakeword is accepted is not specified yet; in particular, it may
-// receive `partial_result` messages and a final `asr_result` without an
-// accepted `WakewordResult`.
+// With no wakeword service available, the server looks for the wakeword at
+// the start of each final transcript. When it finds one, it sends an accepted
+// result and removes the wakeword from that transcript. If nothing is left, no
+// final `asr_result` is sent and the stream continues. So a stream can carry
+// more than one accepted result. `partial_result` messages can come before an
+// accepted result.
 //
-// With no wakeword service available, the server matches the wakeword in each
-// final transcript and sends only accepted results, possibly more than one per
-// stream. `partial_result` messages can come first.
+// The server reports near misses only when it is configured to. Reporting is
+// off by default and needs a wakeword service. Each near miss is sent as soon
+// as it is detected and before any accepted `WakewordResult`.
 message WakewordResult {
-  // When the candidate was detected, in milliseconds from the start of the
-  // stream's audio. With a wakeword service available, this is the end of the
+  // Where the candidate is in the stream's audio, in milliseconds from its
+  // start. With a wakeword service available, this is the end of the
   // wakeword. With no wakeword service available, it is the start of the
   // utterance that contains the wakeword.
   uint64 timestamp_ms = 1;
