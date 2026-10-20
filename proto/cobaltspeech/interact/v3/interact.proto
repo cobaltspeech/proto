@@ -58,11 +58,10 @@ service InteractService {
 
   // Performs bidirectional streaming speech recognition. Receive results while
   // sending audio. Each result will either be a partial ASR result, or a final
-  // result. Partial results will be sent as soon as they are ready, and all
-  // results will be sent, regardless of any wakeword configuration in the
-  // session. A final result will be sent exactly once, and the stream will be
-  // closed then. If a session has a wakeword enabled, the final result will
-  // only be emitted if the required wakeword is present. The ASRResult in the
+  // result. Partial results will be sent as soon as they are ready. A final
+  // result will be sent exactly once, and the stream will be closed then. If a
+  // session requires a wakeword, which results are sent and when depends on the
+  // server's wakeword configuration; see `WakewordResult`. The ASRResult in the
   // final message maybe used in the UpdateSession method for further dialog
   // processing.
   rpc StreamASRWithPartials(stream StreamASRWithPartialsRequest) returns (stream StreamASRWithPartialsResponse) {}
