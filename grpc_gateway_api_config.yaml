@@ -44,6 +44,17 @@ http:
       post: /api/bluehenge/v2/get-entity-image-data
       body: "*"
 
+    # Capt - v1
+    - selector: cobaltspeech.capt.v1.CAPTService.Version
+      get: /api/capt/v1/version
+    - selector: cobaltspeech.capt.v1.CAPTService.ListModels
+      get: /api/capt/v1/list-models
+    - selector: cobaltspeech.capt.v1.CAPTService.Evaluate
+      post: /api/capt/v1/evaluate
+      body: "*"
+    - selector: cobaltspeech.capt.v1.CAPTService.StreamingEvaluate
+      get: /api/capt/v1/streaming-evaluate
+
     # Chosun - v2
     - selector: cobaltspeech.chosun.v2.ChosunService.Version
       get: /api/chosun/v2/version
